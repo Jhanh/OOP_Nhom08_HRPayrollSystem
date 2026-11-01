@@ -6,7 +6,7 @@ import java.time.format.DateTimeParseException;
 import java.util.Objects;
 import vn.edu.ptit.oop.nhom08.exception.InvalidEmployeeDataException;
 
-// Lớp trừu tượng cha cho tất cả loại nhân viên
+// Lớp trừu tượng cha định nghĩa thuộc tính và hành vi cốt lõi của nhân viên
 public abstract class Employee {
     private String id;
     private String fullName;
@@ -14,7 +14,6 @@ public abstract class Employee {
     private double baseSalary;
     private LocalDate hireDate;
 
-    // Khởi tạo đối tượng với kiểu dữ liệu chuẩn (double, LocalDate)
     public Employee(String id, String fullName, String department, double baseSalary, LocalDate hireDate) 
             throws InvalidEmployeeDataException {
         setId(id);
@@ -24,7 +23,6 @@ public abstract class Employee {
         setHireDate(hireDate);
     }
 
-    // Khởi tạo tiện ích hỗ trợ nạp dữ liệu từ chuỗi (Form/CSV)
     public Employee(String id, String fullName, String department, String baseSalaryStr, String hireDateStr) 
             throws InvalidEmployeeDataException {
         setId(id);
@@ -34,18 +32,17 @@ public abstract class Employee {
         setHireDate(hireDateStr);
     }
 
-    // Phương thức trừu tượng tính lương theo từng loại nhân viên
+    // Phương thức trừu tượng: từng loại nhân viên con bắt buộc phải tự cài đặt cách tính lương
     public abstract double calculateSalary();
 
-    // Phương thức trừu tượng trả về loại nhân viên
+    // Phương thức trừu tượng: trả về tên hiển thị loại nhân viên
     public abstract String getEmployeeType();
 
-    // Bí danh getTypeName để tương thích nếu các component gọi theo cách này
     public String getTypeName() {
         return getEmployeeType();
     }
 
-    // Tính số năm thâm niên (final để cố định công thức)
+    // Thâm niên công tác (năm): cố định công thức tính bằng final
     public final int getSeniorityYears() {
         if (hireDate == null) {
             return 0;

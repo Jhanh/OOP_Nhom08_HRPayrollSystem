@@ -3,16 +3,14 @@ package vn.edu.ptit.oop.nhom08.model;
 import java.time.LocalDate;
 import vn.edu.ptit.oop.nhom08.exception.InvalidEmployeeDataException;
 
-// Thực tập sinh (hưởng trợ cấp cố định, không chịu thuế TNCN)
+// Thực tập sinh: Lương = Trợ cấp cố định (miễn thuế TNCN)
 public class Intern extends Employee {
 
-    // Khởi tạo với kiểu dữ liệu chuẩn (double, LocalDate)
     public Intern(String id, String fullName, String department, double allowance, LocalDate hireDate) 
             throws InvalidEmployeeDataException {
         super(id, fullName, department, allowance, hireDate);
     }
 
-    // Khởi tạo tiện ích hỗ trợ nạp dữ liệu từ chuỗi (Form/CSV)
     public Intern(String id, String fullName, String department, String allowanceStr, String hireDateStr) 
             throws InvalidEmployeeDataException {
         this(id, fullName, department, parseAllowance(allowanceStr), parseHireDate(hireDateStr));

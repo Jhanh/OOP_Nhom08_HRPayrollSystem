@@ -3,10 +3,10 @@ package vn.edu.ptit.oop.nhom08.model;
 import java.time.LocalDate;
 import vn.edu.ptit.oop.nhom08.exception.InvalidEmployeeDataException;
 
-// Nhân viên toàn thời gian (hưởng lương cơ bản * hệ số + thưởng, chịu thuế TNCN)
+// Nhân viên toàn thời gian: Lương = Lương cơ bản * Hệ số + Thưởng (chịu thuế TNCN)
 public class FullTimeEmployee extends Employee implements Taxable {
-    private double salaryFactor; // Hệ số lương (>= 1.0)
-    private double bonus;        // Tiền thưởng/phụ cấp (>= 0)
+    private double salaryFactor;
+    private double bonus;
 
     public FullTimeEmployee(String id, String fullName, String department, double baseSalary, LocalDate hireDate,
                             double salaryFactor, double bonus) throws InvalidEmployeeDataException {

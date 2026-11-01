@@ -21,7 +21,7 @@ import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 
-// Lớp cửa sổ trừu tượng cơ sở bắt buộc (lớp cha của MainWindow)
+// Template Method Pattern: Lớp cha định hình khung giao diện, lớp con cài đặt initUI()
 public abstract class BaseWindow extends JFrame {
     protected JMenuBar menuBar;
     protected JMenu fileMenu, viewMenu, helpMenu;
@@ -36,33 +36,28 @@ public abstract class BaseWindow extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        loadIcon();       // Nạp icon tiêu đề
-        initMenuBar();    // Khởi tạo menu (File, View, Help)
-        initToolBar();    // Khởi tạo thanh công cụ
-        initStatusBar();  // Khởi tạo thanh trạng thái
-        initUI();         // Phương thức trừu tượng: lớp con tự cài đặt
+        loadIcon();
+        initMenuBar();
+        initToolBar();
+        initStatusBar();
+        initUI();
     }
 
-    // Lớp con xây dựng nội dung chính và thêm vào BorderLayout.CENTER
     protected abstract void initUI();
 
-    // Hook: lớp con override để hiển thị AboutDialog riêng của nhóm
     protected void showAbout() {
         JOptionPane.showMessageDialog(this, getTitle(), "About", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    // Cập nhật thông điệp trên thanh trạng thái
     protected void setStatus(String msg) {
         statusLabel.setText(" " + msg);
     }
 
-    // Nạp icon an toàn từ resources hoặc đường dẫn file
     protected static ImageIcon loadImageIcon(String path) {
         URL url = BaseWindow.class.getResource(path);
         if (url != null) {
             return new ImageIcon(url);
         }
-        // Fallback nạp trực tiếp nếu chạy ngoài môi trường IDE
         File file = new File(path.startsWith("/") ? path.substring(1) : path);
         if (file.exists()) {
             return new ImageIcon(file.getAbsolutePath());
@@ -70,7 +65,6 @@ public abstract class BaseWindow extends JFrame {
         return null;
     }
 
-    // Tiện ích thêm nút có icon vào thanh công cụ
     protected JButton addToolButton(String iconPath, String tooltip, ActionListener action) {
         ImageIcon icon = loadImageIcon(iconPath);
         JButton btn = (icon != null) ? new JButton(icon) : new JButton(tooltip);

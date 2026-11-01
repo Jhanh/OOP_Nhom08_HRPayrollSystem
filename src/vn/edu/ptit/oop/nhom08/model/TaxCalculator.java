@@ -2,26 +2,25 @@ package vn.edu.ptit.oop.nhom08.model;
 
 import java.util.List;
 
-// Tiện ích tính thuế TNCN lũy tiến từng phần và tiền lương thực lĩnh
+// Biểu thuế thu nhập cá nhân lũy tiến 4 bậc
 public final class TaxCalculator {
 
-    public static final double LEVEL_1_LIMIT = 10_000_000; // Ngưỡng miễn thuế: <= 10 triệu
-    public static final double LEVEL_2_LIMIT = 20_000_000; // Cận trên bậc 2: 20 triệu
-    public static final double LEVEL_3_LIMIT = 40_000_000; // Cận trên bậc 3: 40 triệu
+    public static final double LEVEL_1_LIMIT = 10_000_000; // Bậc 1: <= 10 triệu (0%)
+    public static final double LEVEL_2_LIMIT = 20_000_000; // Bậc 2: 10 - 20 triệu (5%)
+    public static final double LEVEL_3_LIMIT = 40_000_000; // Bậc 3: 20 - 40 triệu (10%)
 
-    public static final double RATE_LEVEL_1 = 0.00; // Thuế suất bậc 1: 0%
-    public static final double RATE_LEVEL_2 = 0.05; // Thuế suất bậc 2: 5%
-    public static final double RATE_LEVEL_3 = 0.10; // Thuế suất bậc 3: 10%
-    public static final double RATE_LEVEL_4 = 0.20; // Thuế suất bậc 4: 20%
+    public static final double RATE_LEVEL_1 = 0.00;
+    public static final double RATE_LEVEL_2 = 0.05;
+    public static final double RATE_LEVEL_3 = 0.10;
+    public static final double RATE_LEVEL_4 = 0.20; // Bậc 4: > 40 triệu (20%)
 
-    // Thuế tối đa tích lũy tại các mốc bậc 2 và bậc 3
     private static final double MAX_TAX_LEVEL_2 = (LEVEL_2_LIMIT - LEVEL_1_LIMIT) * RATE_LEVEL_2; // 500.000 VNĐ
     private static final double MAX_TAX_LEVEL_3 = MAX_TAX_LEVEL_2 + (LEVEL_3_LIMIT - LEVEL_2_LIMIT) * RATE_LEVEL_3; // 2.500.000 VNĐ
 
     private TaxCalculator() {
     }
 
-    // Tính thuế TNCN lũy tiến từ tổng thu nhập chịu thuế
+    // Tính thuế TNCN lũy tiến từng phần theo thu nhập chịu thuế
     public static double calculateTax(double income) {
         if (income < 0) {
             throw new IllegalArgumentException("Thu nhập chịu thuế không được nhỏ hơn 0!");
@@ -37,7 +36,7 @@ public final class TaxCalculator {
         }
     }
 
-    // Tính thuế TNCN cho nhân viên: chỉ tính nếu thuộc diện Taxable, còn lại miễn thuế (0 VNĐ)
+    // Đa hình: Chỉ tính thuế nếu nhân viên cài đặt interface Taxable
     public static double calculateTax(Employee employee) {
         if (employee instanceof Taxable) {
             return ((Taxable) employee).calculateTax();

@@ -3,11 +3,11 @@ package vn.edu.ptit.oop.nhom08.model;
 import java.time.LocalDate;
 import vn.edu.ptit.oop.nhom08.exception.InvalidEmployeeDataException;
 
-// Quản lý: kế thừa 2 tầng (Manager -> FullTimeEmployee -> Employee), có thêm phụ cấp trách nhiệm
+// Quản lý: Kế thừa 2 tầng (Manager -> FullTimeEmployee -> Employee)
 public class Manager extends FullTimeEmployee {
 
-    public static final double ALLOWANCE_PER_PERSON = 500_000; // Phụ cấp trách nhiệm / người quản lý (VNĐ)
-    private int managedCount; // Số người quản lý (>= 0)
+    public static final double ALLOWANCE_PER_PERSON = 500_000;
+    private int managedCount;
 
     public Manager(String id, String fullName, String department, double baseSalary, LocalDate hireDate,
                    double salaryFactor, double bonus, int managedCount) throws InvalidEmployeeDataException {

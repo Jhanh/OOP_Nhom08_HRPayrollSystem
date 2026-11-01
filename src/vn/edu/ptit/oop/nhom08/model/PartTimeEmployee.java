@@ -3,24 +3,21 @@ package vn.edu.ptit.oop.nhom08.model;
 import java.time.LocalDate;
 import vn.edu.ptit.oop.nhom08.exception.InvalidEmployeeDataException;
 
-// Nhân viên bán thời gian (lương tính theo giờ làm thực tế)
+// Nhân viên bán thời gian: Lương = Lương theo giờ * Giờ làm việc (miễn thuế TNCN)
 public class PartTimeEmployee extends Employee {
-    private double workingHours; // Số giờ làm việc trong tháng (>= 0)
+    private double workingHours;
 
-    // Khởi tạo với kiểu dữ liệu chuẩn (double, LocalDate)
     public PartTimeEmployee(String id, String fullName, String department, double hourlyRate, LocalDate hireDate,
                             double workingHours) throws InvalidEmployeeDataException {
         super(id, fullName, department, hourlyRate, hireDate);
         setWorkingHours(workingHours);
     }
 
-    // Khởi tạo tiện ích hỗ trợ nạp dữ liệu từ chuỗi (Form/CSV)
     public PartTimeEmployee(String id, String fullName, String department, String hourlyRateStr, String hireDateStr,
                             double workingHours) throws InvalidEmployeeDataException {
         this(id, fullName, department, parseHourlyRate(hourlyRateStr), parseHireDate(hireDateStr), workingHours);
     }
 
-    // Khởi tạo tiện ích hỗ trợ nạp toàn bộ tham số từ chuỗi
     public PartTimeEmployee(String id, String fullName, String department, String hourlyRateStr, String hireDateStr,
                             String workingHoursStr) throws InvalidEmployeeDataException {
         this(id, fullName, department, parseHourlyRate(hourlyRateStr), parseHireDate(hireDateStr), parseWorkingHours(workingHoursStr));
