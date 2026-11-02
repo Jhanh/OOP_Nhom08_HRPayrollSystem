@@ -1,0 +1,362 @@
+====================================================================================================
+               HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG (PTIT)
+                   KHOA CÔNG NGHỆ THÔNG TIN - BỘ MÔN OOP
+               ĐỒ ÁN MÔN HỌC: LẬP TRÌNH HƯỚNG ĐỐI TƯỢNG (INT1332)
+====================================================================================================
+TÀI LIỆU UML CHI TIẾT: 01. CỤM THỰC THỂ MIỀN, KẾ THỪA, ĐA HÌNH & THUẾ TNCN
+(DOMAIN MODEL, 2-TIER INHERITANCE, POLYMORPHISM & TAX ENGINE)
+PACKAGE: vn.edu.ptit.oop.nhom08.model & vn.edu.ptit.oop.nhom08.exception
+CHUẨN THIẾT KẾ: OMG UML 2.5 SPECIFICATION
+====================================================================================================
+
+I. TỔNG QUAN VAI TRÒ CỦA CỤM MODEL
+----------------------------------------------------------------------------------------------------
+Cụm Domain Model là "trái tim" của toàn bộ hệ thống, đại diện cho các đối tượng thế giới thực và quy 
+tắc nghiệp vụ cốt lõi của doanh nghiệp. Đây là nơi thể hiện trọn vẹn và sâu sắc nhất cả 4 tính chất 
+nền tảng của Lập trình hướng đối tượng (OOP):
+
+1. CÂY KẾ THỪA PHÂN TẦNG (INHERITANCE HIERARCHY):
+   - Lớp cha trừu tượng gốc: <<abstract>> Employee
+   - 3 Lớp con kế thừa cấp 1: FullTimeEmployee, PartTimeEmployee, Intern
+   - Điểm sáng Kế thừa 2 tầng (2-Tier Inheritance): Manager kế thừa từ FullTimeEmployee (chứ không phải 
+     kế thừa trực tiếp từ Employee), thừa hưởng toàn bộ cơ chế lương hệ số, thưởng và bổ sung năng lực quản lý.
+
+2. GIAO DIỆN & CƠ CHẾ TÍNH THUẾ (INTERFACE & TAX ENGINE):
+   - <<interface>> Taxable: Định nghĩa bản hợp đồng về nghĩa vụ thuế TNCN (+ calculateTax(): double).
+   - FullTimeEmployee hiện thực hóa Taxable. Manager kế thừa FullTime nên tự động là một Taxable.
+   - Intern và PartTimeEmployee KHÔNG hiện thực hóa Taxable (do mức thu nhập không thuộc diện trích thuế lũy tiến).
+   - TaxCalculator: Lớp tiện ích tĩnh đóng gói công thức tính thuế lũy tiến 4 bậc theo quy định tài chính.
+
+====================================================================================================
+II. BẢN VẼ SƠ ĐỒ LỚP CHI TIẾT CỤM MODEL (ASCII CLASS DIAGRAM)
+----------------------------------------------------------------------------------------------------
+
+                                ┌──────────────────────────────────────────────────────────────┐
+                                │                         <<abstract>>                         │
+                                │                           Employee                           │
+                                ├──────────────────────────────────────────────────────────────┤
+                                │ - id: String                                                 │
+                                │ - fullName: String                                           │
+                                │ - department: String                                         │
+                                │ - baseSalary: double                                         │
+                                │ - hireDate: LocalDate                                        │
+                                ├──────────────────────────────────────────────────────────────┤
+                                │ + Employee(id: String, fullName: String, department: String, │
+                                │            baseSalary: double, hireDate: LocalDate)          │
+                                │ + getId(): String                                            │
+                                │ + setId(id: String): void                                    │
+                                │ + getFullName(): String                                      │
+                                │ + setFullName(fullName: String): void                        │
+                                │ + getDepartment(): String                                    │
+                                │ + setDepartment(department: String): void                    │
+                                │ + getBaseSalary(): double                                    │
+                                │ + setBaseSalary(baseSalary: double): void                    │
+                                │ + getHireDate(): LocalDate                                   │
+                                │ + setHireDate(hireDate: LocalDate): void                     │
+                                │ + {abstract} calculateSalary(): double                       │
+                                │ + {abstract} getRoleName(): String                           │
+                                │ + getSeniorityYears(): int                                   │
+                                │ + toCsvLine(): String                                        │
+                                │ + equals(o: Object): boolean                                 │
+                                │ + hashCode(): int                                            │
+                                │ + toString(): String                                         │
+                                └──────────────────────────────▲───────────────────────────────┘
+                                                               │
+                 ┌─────────────────────────────────────────────┼─────────────────────────────────────────────┐
+                 │ ────▷ Generalization                        │ ────▷ Generalization                        │ ────▷ Generalization
+                 │ (extends)                                   │ (extends)                                   │ (extends)
+┌────────────────┴─────────────────────────────┐┌──────────────┴──────────────────────────────┐┌──────────────┴──────────────────────────────┐
+│               <<concrete>>                   ││               <<concrete>>                   ││               <<concrete>>                   │
+│             PartTimeEmployee                 ││                  Intern                      ││              FullTimeEmployee                │
+├──────────────────────────────────────────────┤├──────────────────────────────────────────────┤├──────────────────────────────────────────────┤
+│ - workingHours: double                       ││ (Không có thuộc tính riêng,                  ││ - salaryFactor: double                       │
+├──────────────────────────────────────────────┤│  sử dụng baseSalary làm trợ cấp cố định)     ││ - bonus: double                              │
+│ + PartTimeEmployee(id: String, name: String, │├──────────────────────────────────────────────┤├──────────────────────────────────────────────┤
+│       dept: String, baseRate: double,        ││ + Intern(id: String, fullName: String,       ││ + FullTimeEmployee(id: String, name: String, │
+│       date: LocalDate, workingHours: double) ││          dept: String, allowance: double,    ││       dept: String, baseSalary: double,      │
+│ + getWorkingHours(): double                  ││          hireDate: LocalDate)                ││       date: LocalDate, salaryFactor: double, │
+│ + setWorkingHours(workingHours: double): void││ + {override} calculateSalary(): double       ││       bonus: double)                         │
+│ + {override} calculateSalary(): double       ││ + {override} getRoleName(): String           ││ + getSalaryFactor(): double                  │
+│ + {override} getRoleName(): String           ││ + toCsvLine(): String                        ││ + setSalaryFactor(salaryFactor: double): void│
+│ + toCsvLine(): String                        │└──────────────────────────────────────────────┘│ + getBonus(): double                         │
+└──────────────────────────────────────────────┘                                               │ + setBonus(bonus: double): void              │
+                                                                                               │ + {override} calculateSalary(): double       │
+                                                                                               │ + {override} getRoleName(): String           │
+                                                                                               │ + {override} calculateTax(): double          │
+                                                                                               │ + getTaxableIncome(): double                 │
+                                                                                               │ + toCsvLine(): String                        │
+                                                                                               └───────▲──────────────────────────────┬────────┘
+                                                                                                       │                              │
+                                                                       ┌───────────────────────────────┘                              │ ┄┄▷ Realization
+                                                                       │ ────▷ Generalization (Cấp 2)                                 │ (implements)
+                                                                       │ (extends)                                                    ▼
+                                                        ┌──────────────┴──────────────────────────────┐                ┌──────────────────────────────┐
+                                                        │                <<concrete>>                 │                │        <<interface>>         │
+                                                        │                  Manager                    │                │           Taxable            │
+                                                        ├─────────────────────────────────────────────┤                ├──────────────────────────────┤
+                                                        │ - managedCount: int                         │                │ + calculateTax(): double     │
+                                                        │ + {static} {final} ALLOWANCE_PER_PERSON:    │                └──────────────▲───────────────┘
+                                                        │            double = 500000.0                │                               │
+                                                        ├─────────────────────────────────────────────┤                               │ <<dependency>>
+                                                        │ + Manager(id: String, fullName: String,     │                               │ uses
+                                                        │       dept: String, baseSalary: double,     │                               │
+                                                        │       date: LocalDate, factor: double,      │                ┌──────────────┴───────────────┐
+                                                        │       bonus: double, managedCount: int)     │                │     <<final>> <<utility>>    │
+                                                        │ + getManagedCount(): int                    │                │        TaxCalculator         │
+                                                        │ + setManagedCount(managedCount: int): void  │                ├──────────────────────────────┤
+                                                        │ + getResponsibilityAllowance(): double      │                │ + {static} {final}           │
+                                                        │ + {override} calculateSalary(): double      │                │   LEVEL_1_LIMIT: double = 10m│
+                                                        │ + {override} getRoleName(): String          │                │ + {static} {final}           │
+                                                        │ + toCsvLine(): String                       │                │   LEVEL_2_LIMIT: double = 20m│
+                                                        └─────────────────────────────────────────────┘                │ + {static} {final}           │
+                                                                                                                       │   LEVEL_3_LIMIT: double = 35m│
+                                                                                                                       │ + {static} {final}           │
+                                                                                                                       │   RATE_LEVEL_1: double = 0.05│
+                                                                                                                       │ + {static} {final}           │
+                                                                                                                       │   RATE_LEVEL_2: double = 0.10│
+                                                                                                                       │ + {static} {final}           │
+                                                                                                                       │   RATE_LEVEL_3: double = 0.15│
+                                                                                                                       │ + {static} {final}           │
+                                                                                                                       │   RATE_LEVEL_4: double = 0.20│
+                                                                                                                       ├──────────────────────────────┤
+                                                                                                                       │ + {static} calculatePersonal-│
+                                                                                                                       │   IncomeTax(taxable: double) │
+                                                                                                                       │   : double                   │
+                                                                                                                       └──────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │                        <<exception>>                        │
+  │                InvalidEmployeeDataException                 │
+  ├─────────────────────────────────────────────────────────────┤
+  │ + InvalidEmployeeDataException(message: String)             │
+  │ + InvalidEmployeeDataException(message: String, cause: ...) │
+  └─────────────────────────────────────────────────────────────┘
+
+====================================================================================================
+III. BẢNG PHÂN TÍCH THUỘC TÍNH & PHƯƠNG THỨC TỪNG LỚP TRONG CỤM
+----------------------------------------------------------------------------------------------------
+
+1. LỚP TRỪU TƯỢNG GỐC: Employee (Abstract Class)
+   - Vị trí mã nguồn: src/vn/edu/ptit/oop/nhom08/model/Employee.java
+   - Thuộc tính (Attributes - 100% private):
+     • - id: String (Mã định danh duy nhất của nhân viên, ví dụ: IT001, CS0006)
+     • - fullName: String (Họ và tên đầy đủ)
+     • - department: String (Phòng ban công tác)
+     • - baseSalary: double (Mức lương cơ bản: FullTime/Manager/Intern tính theo tháng, PartTime tính theo giờ)
+     • - hireDate: LocalDate (Ngày chính thức gia nhập doanh nghiệp)
+   - Phương thức nghiệp vụ cốt lõi:
+     • + {abstract} calculateSalary(): double -> Phương thức thuần ảo bắt buộc các lớp con phải tự định nghĩa công thức.
+     • + {abstract} getRoleName(): String -> Trả về tên hiển thị chức vụ tiếng Việt ("Toàn thời gian", "Quản lý"...).
+     • + getSeniorityYears(): int -> Tính thâm niên công tác chính xác dựa trên Period.between(hireDate, LocalDate.now()).
+     • + toCsvLine(): String -> Chuyển đổi trạng thái đối tượng thành định dạng dòng CSV chuẩn.
+     • + equals(Object o) & hashCode(): int -> Định danh đối tượng dựa trên duy nhất trường 'id'.
+
+2. LỚP CON CẤP 1: FullTimeEmployee
+   - Vị trí mã nguồn: src/vn/edu/ptit/oop/nhom08/model/FullTimeEmployee.java
+   - Kế thừa: extends Employee | Hiện thực hóa: implements Taxable
+   - Thuộc tính bổ sung:
+     • - salaryFactor: double (Hệ số lương chức danh, ví dụ: 1.20, 1.50)
+     • - bonus: double (Khoản tiền thưởng hiệu quả công việc trong tháng)
+   - Công thức tính toán:
+     • calculateSalary(): double = (baseSalary * salaryFactor) + bonus
+     • getTaxableIncome(): double = calculateSalary() (Thu nhập chịu thuế)
+     • calculateTax(): double = TaxCalculator.calculatePersonalIncomeTax(getTaxableIncome())
+
+3. LỚP CON CẤP 2: Manager (Kế Thừa 2 Tầng)
+   - Vị trí mã nguồn: src/vn/edu/ptit/oop/nhom08/model/Manager.java
+   - Kế thừa: extends FullTimeEmployee
+   - Thuộc tính bổ sung:
+     • - managedCount: int (Số lượng nhân sự trực tiếp quản lý trong phòng ban)
+     • + {static} {final} ALLOWANCE_PER_PERSON: double = 500,000 VNĐ (Định mức phụ cấp trên mỗi cấp dưới)
+   - Điểm sáng học thuật:
+     • getResponsibilityAllowance(): double = managedCount * ALLOWANCE_PER_PERSON
+     • calculateSalary(): double = super.calculateSalary() + getResponsibilityAllowance()
+       -> Manager tận dụng trọn vẹn kết quả tính lương của lớp cha FullTimeEmployee thông qua từ khóa 'super',
+          sau đó cộng thêm phần phụ cấp trách nhiệm quản lý.
+
+4. LỚP CON CẤP 1: PartTimeEmployee
+   - Vị trí mã nguồn: src/vn/edu/ptit/oop/nhom08/model/PartTimeEmployee.java
+   - Kế thừa: extends Employee
+   - Thuộc tính bổ sung:
+     • - workingHours: double (Tổng số giờ làm việc thực tế trong tháng)
+   - Công thức tính toán:
+     • calculateSalary(): double = baseSalary * workingHours (Ở đây baseSalary đóng vai trò đơn giá lương theo giờ)
+
+5. LỚP CON CẤP 1: Intern (Thực Tập Sinh)
+   - Vị trí mã nguồn: src/vn/edu/ptit/oop/nhom08/model/Intern.java
+   - Kế thừa: extends Employee
+   - Công thức tính toán:
+     • calculateSalary(): double = baseSalary (Trợ cấp thực tập sinh nhận nguyên vẹn mức cố định, không chịu thuế)
+
+6. INTERFACE: Taxable
+   - Vị trí mã nguồn: src/vn/edu/ptit/oop/nhom08/model/Taxable.java
+   - Phương thức: + calculateTax(): double
+
+7. LỚP TIỆN ÍCH TĨNH: TaxCalculator (Tax Engine)
+   - Vị trí mã nguồn: src/vn/edu/ptit/oop/nhom08/model/TaxCalculator.java
+   - Bảng 4 bậc thuế TNCN lũy tiến từng phần:
+     ┌───────┬──────────────────────────┬───────────┬─────────────────────────────────────────────────┐
+     │ Bậc   │ Thu Nhập Chịu Thuế (VND) │ Thuế Suất │ Công Thức Lũy Tiến Từng Phần                    │
+     ├───────┼──────────────────────────┼───────────┼─────────────────────────────────────────────────┤
+     │ Bậc 1 │ Đến 10 triệu (<= 10tr)   │    5%     │ Thuế = ThuNhap * 5%                             │
+     │ Bậc 2 │ Trên 10tr đến 20tr       │   10%     │ Thuế = 10tr*5% + (ThuNhap - 10tr)*10%           │
+     │ Bậc 3 │ Trên 20tr đến 35tr       │   15%     │ Thuế = 10tr*5% + 10tr*10% + (ThuNhap - 20tr)*15%│
+     │ Bậc 4 │ Trên 35 triệu (> 35tr)   │   20%     │ Thuế = 10tr*5% + 10tr*10% + 15tr*15% + phần dư*20%│
+     └───────┴──────────────────────────┴───────────┴─────────────────────────────────────────────────┘
+
+====================================================================================================
+IV. PHÂN TÍCH 4 TÍNH CHẤT OOP ÁP DỤNG TRONG CỤM MODEL
+====================================================================================================
+
+1. TÍNH ĐÓNG GÓI (ENCAPSULATION):
+   - Toàn bộ các biến thể hiện trạng thái đối tượng (- id, - fullName, - baseSalary, - salaryFactor...) 
+     đều được bảo vệ bằng phạm vi truy cập 'private'.
+   - Bên ngoài muốn đọc hoặc thay đổi trạng thái phải đi qua các hàm Getter và Setter có kiểm soát tính hợp lệ:
+     Ví dụ: setSalaryFactor() chặn số âm, setWorkingHours() chặn số âm, ném IllegalArgumentException nếu sai phạm.
+
+2. TÍNH KẾ THỪA (INHERITANCE):
+   - Tránh trùng lặp mã nguồn (DRY - Don't Repeat Yourself): Cả 4 loại nhân sự đều dùng chung 5 thuộc tính 
+     và các phương thức getSeniorityYears(), equals(), hashCode() từ lớp cha Employee.
+   - Kế thừa 2 tầng sâu sắc: Manager kế thừa FullTimeEmployee, tái sử dụng 'super.calculateSalary()'.
+
+3. TÍNH ĐA HÌNH (POLYMORPHISM):
+   - Đa hình lúc chạy (Runtime Polymorphism / Dynamic Binding):
+     Cùng một lời gọi phương thức 'e.calculateSalary()', nhưng:
+     • Nếu e là Manager -> Chạy công thức Manager.
+     • Nếu e là FullTime -> Chạy công thức FullTime.
+     • Nếu e là PartTime -> Chạy công thức PartTime.
+     • Nếu e là Intern -> Chạy công thức Intern.
+   - Đa hình qua Giao diện (Interface Polymorphism):
+     'if (e instanceof Taxable) { double tax = ((Taxable) e).calculateTax(); }'
+     Hệ thống nhận diện tự động đối tượng chịu thuế tại Runtime mà không phụ thuộc vào lớp cụ thể.
+   - Đa hình lúc biên dịch (Compile-time Polymorphism / Overloading):
+     Nạp chồng phương thức khởi tạo Constructor (Constructor mặc định, Constructor đầy đủ tham số).
+
+4. TÍNH TRỪU TƯỢNG (ABSTRACTION):
+   - Lớp Employee là lớp trừu tượng (abstract class) không thể khởi tạo trực tiếp bằng 'new Employee()'.
+   - Employee chỉ định nghĩa các phương thức trừu tượng '+ calculateSalary()*' và '+ getRoleName()*' như 
+     một "bản hợp đồng nghiệp vụ", giấu đi chi tiết cài đặt và bắt buộc các lớp con cụ thể phải hiện thực hóa.
+
+====================================================================================================
+V. MÃ NGUỒN PLANTUML CHUYÊN BIỆT CHO CỤM MODEL
+(Copy-paste vào https://www.planttext.com để render ảnh độ phân giải cao)
+----------------------------------------------------------------------------------------------------
+
+@startuml
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+
+title CỤM DOMAIN MODEL, KẾ THỪA 2 TẦNG & TÍNH THUẾ TNCN (OOP NHÓM 08)
+
+abstract class Employee <<abstract>> {
+    - id: String
+    - fullName: String
+    - department: String
+    - baseSalary: double
+    - hireDate: LocalDate
+    + Employee(id: String, fullName: String, department: String, baseSalary: double, hireDate: LocalDate)
+    + getId(): String
+    + setId(id: String): void
+    + getFullName(): String
+    + setFullName(fullName: String): void
+    + getDepartment(): String
+    + setDepartment(department: String): void
+    + getBaseSalary(): double
+    + setBaseSalary(baseSalary: double): void
+    + getHireDate(): LocalDate
+    + setHireDate(hireDate: LocalDate): void
+    + {abstract} calculateSalary(): double
+    + {abstract} getRoleName(): String
+    + getSeniorityYears(): int
+    + toCsvLine(): String
+    + equals(o: Object): boolean
+    + hashCode(): int
+    + toString(): String
+}
+
+interface Taxable <<interface>> {
+    + calculateTax(): double
+}
+
+class FullTimeEmployee {
+    - salaryFactor: double
+    - bonus: double
+    + FullTimeEmployee(id: String, fullName: String, department: String, baseSalary: double, hireDate: LocalDate, salaryFactor: double, bonus: double)
+    + getSalaryFactor(): double
+    + setSalaryFactor(salaryFactor: double): void
+    + getBonus(): double
+    + setBonus(bonus: double): void
+    + {override} calculateSalary(): double
+    + {override} getRoleName(): String
+    + {override} calculateTax(): double
+    + getTaxableIncome(): double
+    + toCsvLine(): String
+}
+
+class Manager {
+    - managedCount: int
+    + {static} {final} ALLOWANCE_PER_PERSON: double = 500000.0
+    + Manager(id: String, fullName: String, department: String, baseSalary: double, hireDate: LocalDate, salaryFactor: double, bonus: double, managedCount: int)
+    + getManagedCount(): int
+    + setManagedCount(managedCount: int): void
+    + getResponsibilityAllowance(): double
+    + {override} calculateSalary(): double
+    + {override} getRoleName(): String
+    + toCsvLine(): String
+}
+
+class PartTimeEmployee {
+    - workingHours: double
+    + PartTimeEmployee(id: String, fullName: String, department: String, baseRatePerHour: double, hireDate: LocalDate, workingHours: double)
+    + getWorkingHours(): double
+    + setWorkingHours(workingHours: double): void
+    + {override} calculateSalary(): double
+    + {override} getRoleName(): String
+    + toCsvLine(): String
+}
+
+class Intern {
+    + Intern(id: String, fullName: String, department: String, allowance: double, hireDate: LocalDate)
+    + {override} calculateSalary(): double
+    + {override} getRoleName(): String
+    + toCsvLine(): String
+}
+
+class TaxCalculator <<final>> {
+    + {static} {final} LEVEL_1_LIMIT: double = 10000000.0
+    + {static} {final} LEVEL_2_LIMIT: double = 20000000.0
+    + {static} {final} LEVEL_3_LIMIT: double = 35000000.0
+    + {static} {final} RATE_LEVEL_1: double = 0.05
+    + {static} {final} RATE_LEVEL_2: double = 0.10
+    + {static} {final} RATE_LEVEL_3: double = 0.15
+    + {static} {final} RATE_LEVEL_4: double = 0.20
+    - TaxCalculator()
+    + {static} calculatePersonalIncomeTax(taxableIncome: double): double
+}
+
+class InvalidEmployeeDataException {
+    + InvalidEmployeeDataException(message: String)
+    + InvalidEmployeeDataException(message: String, cause: Throwable)
+}
+
+' Mối quan hệ kế thừa & hiện thực hóa
+Employee <|-- FullTimeEmployee : <<extends>>
+FullTimeEmployee <|-- Manager : <<extends>> 2-Tier Inheritance
+Employee <|-- PartTimeEmployee : <<extends>>
+Employee <|-- Intern : <<extends>>
+Taxable <|.. FullTimeEmployee : <<implements>>
+
+' Mối quan hệ phụ thuộc
+FullTimeEmployee ..> TaxCalculator : <<calls>>
+Employee ..> InvalidEmployeeDataException : <<throws on error>>
+
+@enduml
+
+====================================================================================================
+HẾT TỆP 01. CỤM THỰC THỂ MIỀN, KẾ THỪA, ĐA HÌNH & THUẾ TNCN
+====================================================================================================
+

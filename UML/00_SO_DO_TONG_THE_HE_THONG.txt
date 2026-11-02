@@ -1,0 +1,450 @@
+====================================================================================================
+               HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG (PTIT)
+                   KHOA CÔNG NGHỆ THÔNG TIN - BỘ MÔN OOP
+               ĐỒ ÁN MÔN HỌC: LẬP TRÌNH HƯỚNG ĐỐI TƯỢNG (INT1332)
+====================================================================================================
+TÀI LIỆU UML CHI TIẾT: 00. SƠ ĐỒ KIẾN TRÚC TỔNG THỂ TOÀN HỆ THỐNG
+(OVERALL ARCHITECTURE & PACKAGE CLASS DIAGRAM)
+CHUẨN THIẾT KẾ: OMG UML 2.5 SPECIFICATION
+HỆ THỐNG: QUẢN LÝ NHÂN SỰ & BẢNG LƯƠNG DOANH NGHIỆP (HR PAYROLL SYSTEM) - NHÓM 08
+====================================================================================================
+
+I. TỔNG QUAN KIẾN TRÚC PHÂN TẦNG (LAYERED ARCHITECTURE)
+----------------------------------------------------------------------------------------------------
+Hệ thống được thiết kế theo mô hình Kiến trúc phân tầng (Layered Architecture) chuẩn mực với nguyên tắc
+"Separation of Concerns" (Tách biệt các mối quan tâm) và "Dependency Inversion Principle" (Đảo ngược phụ
+thuộc trong SOLID). 
+
+Mỗi tầng chỉ giao tiếp với tầng liền kề bên dưới thông qua các Giao diện trừu tượng (Interface) hoặc 
+đối tượng truyền tải dữ liệu (Data Entities), hoàn toàn không có sự phụ thuộc vòng tròn (Circular Dependency):
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ TẦNG 1: TRÌNH DIỄN GIAO DIỆN NGƯỜI DÙNG (PRESENTATION LAYER - SWING UI)                          │
+│ Package: vn.edu.ptit.oop.nhom08.ui, vn.edu.ptit.oop.nhom08.ui.dialogs, ui.panels, common         │
+│ - BaseWindow (Template Method) -> MainWindow (JFrame điều phối chính 2 Tab)                      │
+│ - EmployeeFormDialog (CardLayout đa hình), AboutDialog, ChartWindow (JFreeChart)                 │
+│ - EmployeeTableModel, PayrollTableModel (AbstractTableModel), PayrollCellRenderer                │
+│ -> VAI TRÒ: Thu nhận sự kiện chuột/phím, điều hướng giao diện, cập nhật đồ họa trên EDT.         │
+│    Tuyệt đối không chứa công thức tính thuế, tính lương hay logic đọc/ghi tệp CSV trực tiếp.     │
+└────────────────────────────────────────────────┬─────────────────────────────────────────────────┘
+                                                 │
+                                                 │ (Gọi nghiệp vụ / Bơm Repository)
+                                                 ▼
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ TẦNG 2: NGHIỆP VỤ & TÍNH TOÁN TÀI CHÍNH (SERVICE LAYER)                                          │
+│ Package: vn.edu.ptit.oop.nhom08.service                                                          │
+│ - PayrollService: Tổng quỹ lương, tổng thuế, phân bổ chi phí phòng ban, thống kê min/max/avg.    │
+│ -> VAI TRÒ: Xử lý toàn bộ logic tính toán tài chính độc lập, ứng dụng Java 8 Stream API.         │
+│    Giao tiếp với Tầng dữ liệu qua Interface EmployeeRepository (Constructor Injection).          │
+└────────────────────────────────────────────────┬─────────────────────────────────────────────────┘
+                                                 │
+                                                 │ (Truy xuất qua Interface EmployeeRepository)
+                                                 ▼
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ TẦNG 3: TRUY XUẤT & ĐỒNG BỘ DỮ LIỆU (REPOSITORY LAYER - DATA ACCESS OBJECT)                      │
+│ Package: vn.edu.ptit.oop.nhom08.repository                                                       │
+│ - <<interface>> EmployeeRepository: Hợp đồng 15 phương thức CRUD, backup, restore, sync.         │
+│ - InMemoryEmployeeRepository: Quản lý Dual-Level Storage (RAM LinkedHashMap + CSV File vật lý).  │
+│ -> VAI TRÒ: Trừu tượng hóa việc lưu trữ, cách ly hoàn toàn tầng trên khỏi định dạng tệp CSV.     │
+└────────────────────────────────────────────────┬─────────────────────────────────────────────────┘
+                                                 │
+                                                 │ (Thao tác trên các thực thể)
+                                                 ▼
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ TẦNG 4: THỰC THỂ CỐT LÕI & CHÍNH SÁCH THUẾ (DOMAIN MODEL LAYER)                                  │
+│ Package: vn.edu.ptit.oop.nhom08.model                                                            │
+│ - <<abstract>> Employee: id, fullName, department, baseSalary, hireDate, calculateSalary()*      │
+│ - FullTimeEmployee: salaryFactor, bonus, calculateSalary(), calculateTax()                       │
+│ - Manager (Kế thừa 2 tầng): managedCount, ALLOWANCE_PER_PERSON, calculateSalary()                │
+│ - PartTimeEmployee: workingHours, calculateSalary()                                              │
+│ - Intern: allowance, calculateSalary()                                                           │
+│ - <<interface>> Taxable: calculateTax()                                                          │
+│ - TaxCalculator: Thuật toán tính thuế TNCN 4 bậc lũy tiến tĩnh                                   │
+│ -> VAI TRÒ: Đại diện cho các đối tượng thế giới thực và quy tắc kinh doanh bất biến.             │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                 ▲
+                                                 │ (Hỗ trợ xuyên suốt)
+┌────────────────────────────────────────────────┴─────────────────────────────────────────────────┐
+│ TẦNG TIỆN ÍCH DÙNG CHUNG & BẢO VỆ DỮ LIỆU (CROSS-CUTTING CONCERNS)                               │
+│ Package: vn.edu.ptit.oop.nhom08.util & vn.edu.ptit.oop.nhom08.exception                          │
+│ - CurrencyFormatUtil: Định dạng tiền tệ VNĐ và ngày tháng dd/MM/yyyy.                            │
+│ - EmployeeComparator: Chiến lược sắp xếp đa tiêu chí (Strategy Pattern), hỗ trợ tiếng Việt chuẩn.│
+│ - ChartHelper: Xây dựng biểu đồ cột & tròn JFreeChart.                                           │
+│ - PayslipExporter: Xuất phiếu lương định dạng Text, HTML, CSV.                                   │
+│ - InvalidEmployeeDataException: Ngoại lệ kiểm soát tính hợp lệ dữ liệu.                          │
+│ - Main: Điểm vào chương trình, nạp FlatLaf Look and Feel.                                        │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+====================================================================================================
+II. BẢNG TRA CỨU TOÀN DIỆN 24 THỰC THỂ TRONG MÃ NGUỒN HỆ THỐNG
+----------------------------------------------------------------------------------------------------
+STT| Tên Lớp / Interface          | Package            | Kiểu Thực Thể         | Vai Trò Thiết Kế
+---+------------------------------+--------------------+-----------------------+-----------------------------
+1  | Main                         | ...nhom08          | Class (Entry Point)   | Khởi động app, nạp FlatLaf
+2  | BaseWindow                   | ...common          | Abstract Class        | Mẫu dựng cửa sổ Template Method
+3  | Employee                     | ...model           | Abstract Class        | Thực thể cha gốc toàn hệ thống
+4  | FullTimeEmployee             | ...model           | Concrete Class        | Nhân viên chính thức (chịu thuế)
+5  | PartTimeEmployee             | ...model           | Concrete Class        | Nhân viên bán thời gian theo giờ
+6  | Intern                       | ...model           | Concrete Class        | Thực tập sinh hưởng trợ cấp
+7  | Manager                      | ...model           | Concrete Class        | Quản lý kế thừa 2 tầng từ FullTime
+8  | Taxable                      | ...model           | Interface             | Bản hợp đồng chịu thuế TNCN
+9  | TaxCalculator                | ...model           | Final Utility Class   | Bảng thuế lũy tiến 4 bậc tĩnh
+10 | InvalidEmployeeDataException | ...exception       | Exception Class       | Kiểm soát lỗi nghiệp vụ nhập liệu
+11 | EmployeeRepository           | ...repository      | Interface             | Hợp đồng CRUD & Lưu trữ dữ liệu
+12 | InMemoryEmployeeRepository   | ...repository      | Concrete Class        | Cài đặt Dual-Level RAM + CSV
+13 | PayrollService               | ...service         | Concrete Class        | Đóng gói logic tài chính
+14 | MainWindow                   | ...ui              | Concrete Class        | Màn hình chính điều phối 2 Tab
+15 | AboutDialog                  | ...ui.dialogs      | JDialog Class         | Cửa sổ giới thiệu đồ án
+16 | EmployeeFormDialog           | ...ui.dialogs      | JDialog Class         | Hộp thoại CardLayout Thêm/Sửa
+17 | EmployeeTableModel           | ...ui.panels       | AbstractTableModel    | Mô hình dữ liệu Tab Hồ sơ
+18 | PayrollTableModel            | ...ui.panels       | AbstractTableModel    | Mô hình dữ liệu Tab Bảng lương
+19 | PayrollCellRenderer          | ...ui.panels       | TableCellRenderer     | Kẻ sọc zebra, căn lề tiền tệ
+20 | ChartWindow                  | ...util            | JFrame Class          | Cửa sổ đồ họa JFreeChart
+21 | ChartHelper                  | ...util            | Final Utility Class   | Bộ tạo biểu đồ cột & tròn
+22 | DeptSummary                  | ...util            | Static Inner Class    | Dữ liệu thống kê từng phòng ban
+23 | CurrencyFormatUtil           | ...util            | Final Utility Class   | Định dạng số tiền VNĐ & ngày
+24 | EmployeeComparator           | ...util            | Comparator Class/Enum | Sắp xếp đa tiêu chí tiếng Việt
+
+====================================================================================================
+III. BẢN VẼ SƠ ĐỒ LỚP TỔNG THỂ (OVERALL ASCII CLASS DIAGRAM)
+----------------------------------------------------------------------------------------------------
+
+                              ┌────────────────────────┐
+                              │     <<entry point>>    │
+                              │          Main          │
+                              └───────────┬────────────┘
+                                          │ <<instantiate>>
+                                          ▼
+┌──────────────────────┐      ┌────────────────────────┐
+│     <<abstract>>     │      │                        │
+│      BaseWindow      │◁─────┤       MainWindow       │
+│  (Template Method)   │      │                        │
+└──────────────────────┘      └────┬──────┬──────┬─────┘
+                                   │      │      │
+            ┌──────────────────────┘      │      └──────────────────────┐
+            │ *                           │ *                           │ <<call>>
+            ▼                             ▼                             ▼
+┌──────────────────────┐      ┌──────────────────────┐      ┌──────────────────────┐
+│  EmployeeTableModel  │      │  PayrollTableModel   │      │  EmployeeFormDialog  │
+│ (Tab 1: Hồ sơ NS)    │      │ (Tab 2: Tính lương)  │      │ (CardLayout Đa hình) │
+└──────────────────────┘      └──────────┬───────────┘      └──────────────────────┘
+                                         │ uses
+                                         ▼
+                              ┌──────────────────────┐
+                              │ PayrollCellRenderer  │
+                              └──────────────────────┘
+
+          MainWindow                   MainWindow                  MainWindow
+              │                            │                            │
+              │ ◇ 1                        │ ◇ 1                        │ <<open>>
+              ▼                            ▼                            ▼
+┌───────────────────────────┐  ┌───────────────────────────┐  ┌────────────────────────────┐
+│      PayrollService       │  │ <<interface>>             │  │        ChartWindow         │
+│                           │  │ EmployeeRepository        │  │      (JFreeChart GUI)      │
+└─────────────┬─────────────┘  └─────────────▲─────────────┘  └─────────────┬──────────────┘
+              │                              │                              │ uses
+              │ ◇ 1                          │ ┄┄▷ implements               ▼
+              │ (Constructor Injection)      │                ┌────────────────────────────┐
+              └──────────────────────────────┤                │        ChartHelper         │
+                                             │                └────────────────────────────┘
+                              ┌──────────────┴─────────────┐
+                              │ InMemoryEmployeeRepository │
+                              │ (RAM Map + File CSV Disk)  │
+                              └──────────────┬─────────────┘
+                                             │
+                                             │ ◆ 1..* (sở hữu danh sách nhân viên)
+                                             ▼
+                               ┌───────────────────────────┐
+                               │       <<abstract>>        │
+                               │         Employee          │
+                               └─────────────▲─────────────┘
+                                             │
+                 ┌───────────────────────────┼───────────────────────────┐
+                 │ ────▷                     │ ────▷                     │ ────▷
+                 │ extends                   │ extends                   │ extends
+  ┌──────────────┴──────────────┐ ┌──────────┴───────────┐ ┌─────────────┴────────────┐
+  │      FullTimeEmployee       │ │   PartTimeEmployee   │ │          Intern          │
+  │  (Lương = base * factor)    │ │(Lương = base * hours)│ │  (Lương = base allowance)│
+  └──────────────▲──────────────┘ └──────────────────────┘ └──────────────────────────┘
+                 │                      │ ┄┄▷ implements
+                 │ ────▷ extends        ▼
+  ┌──────────────┴──────────────┐ ┌───────────────────────────┐
+  │           Manager           │ │        <<interface>>      │
+  │    (Kế thừa 2 tầng)         │ │          Taxable          │
+  │(Lương = FullTime + phụ cấp) │ └─────────────▲─────────────┘
+  └─────────────────────────────┘               │
+                                                │ <<dependency>>
+                                  ┌─────────────┴─────────────┐
+                                  │       TaxCalculator       │
+                                  │ (Bảng thuế TNCN 4 bậc)    │
+                                  └───────────────────────────┘
+
+  Các bộ tiện ích hỗ trợ ngang hàng (Cross-cutting Utilities):
+  - EmployeeComparator ┄┄▷ Comparator<Employee> (Chiến lược sắp xếp tiếng Việt)
+  - CurrencyFormatUtil (Định dạng VNĐ & ngày tháng)
+  - PayslipExporter (Xuất phiếu lương cá nhân Text/HTML/CSV)
+  - InvalidEmployeeDataException ────▷ Exception (Bắt lỗi nghiệp vụ toàn hệ thống)
+
+====================================================================================================
+IV. CÁC LUỒNG TƯƠNG TÁC XUYÊN TẦNG ĐIỂN HÌNH (CROSS-LAYER INTERACTION FLOWS)
+----------------------------------------------------------------------------------------------------
+
+1. LUỒNG KHỞI ĐỘNG HỆ THỐNG (STARTUP SEQUENCE):
+   Main.java
+     │── (1) FlatLightLaf.setup() -> Cài đặt giao diện FlatLaf hiện đại
+     │── (2) SwingUtilities.invokeLater() -> Đẩy tiến trình lên Event Dispatch Thread (EDT)
+     │── (3) new InMemoryEmployeeRepository() -> Khởi tạo tầng dữ liệu
+     │         │── (3.1) loadFromCsv("data/employees.csv") -> Đọc tệp phẳng CSV
+     │         └── (3.2) Parse từng dòng CSV -> Tạo đối tượng FullTime/PartTime/Intern/Manager nạp vào RAM Map
+     │── (4) new PayrollService(repository) -> Bơm phụ thuộc Repository vào tầng Nghiệp vụ
+     └── (5) new MainWindow(repository, payrollService) -> Khởi tạo giao diện chính
+               │── (5.1) super() -> Gọi BaseWindow.setupWindow() (Template Method)
+               └── (5.2) initUI() -> Dựng Tab 1 (Hồ sơ), Tab 2 (Lương), nạp dữ liệu lên JTable
+
+2. LUỒNG THÊM MỚI NHÂN VIÊN ĐA HÌNH (CREATE EMPLOYEE SEQUENCE):
+   Người dùng click nút "Thêm nhân viên" trên MainWindow
+     │── (1) MainWindow mở hộp thoại: new EmployeeFormDialog(this, repository)
+     │── (2) Người dùng chọn loại nhân viên trên ComboBox (FullTime, PartTime, Intern, Manager)
+     │         └── Dialog dùng CardLayout lật đúng panel nhập liệu đặc thù
+     │── (3) Người dùng nhập thông tin và bấm "Lưu":
+     │         │── (3.1) Kiểm tra tính hợp lệ (Validate) -> Ném InvalidEmployeeDataException nếu vi phạm
+     │         └── (3.2) Tạo đúng thể hiện cụ thể: Employee newEmp = new Manager(...) / FullTime(...)
+     │── (4) repository.save(newEmp)
+     │         │── (4.1) Kiểm tra trùng lặp ID trên RAM Map: storage.containsKey(id)
+     │         │── (4.2) Lưu vào LinkedHashMap: storage.put(id, newEmp)
+     │         └── (4.3) Ghi nối tiếp (Append) dòng mới ra file CSV vật lý: data/employees.csv
+     └── (5) MainWindow.applyFilterAndSort() -> Tự động nạp lại TableModel và vẽ lại bảng
+
+3. LUỒNG TÍNH LƯƠNG & XUẤT PHIẾU LƯƠNG TOÀN DOANH NGHIỆP:
+   MainWindow chuyển sang Tab 2 "Bảng Tính Lương & Thuế TNCN"
+     │── (1) PayrollTableModel duyệt qua danh sách Employee từ Repository
+     │── (2) Với mỗi nhân viên 'e', gọi 'e.calculateSalary()' -> Đa hình lúc chạy (Dynamic Binding)
+     │── (3) Nếu 'e instanceof Taxable', gọi '((Taxable) e).calculateTax()' -> Tính thuế TNCN
+     │── (4) Tính Thực lĩnh = Lương tổng - Thuế TNCN
+     │── (5) Cập nhật các ô tóm tắt trên ToolBar:
+     │         │── payrollService.calculateTotalPayroll()
+     │         │── payrollService.calculateTotalTax()
+     │         └── payrollService.calculateTotalNetPay()
+     └── (6) Người dùng chọn 1 nhân viên và bấm "Xuất phiếu lương":
+               └── PayslipExporter.exportToHtml(emp, targetFile) -> Sinh mã HTML xuất sắc ra đĩa
+
+====================================================================================================
+V. MÃ NGUỒN PLANTUML TỔNG THỂ KIẾN TRÚC TOÀN HỆ THỐNG
+(Có thể copy-paste trực tiếp vào https://www.planttext.com để render ảnh)
+----------------------------------------------------------------------------------------------------
+
+@startuml
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 11
+
+title HỆ THỐNG QUẢN LÝ NHÂN SỰ & BẢNG LƯƠNG (OOP NHÓM 08 - PTIT) - SƠ ĐỒ LỚP TỔNG THỂ
+
+package "vn.edu.ptit.oop.nhom08.model" #EBF3FB {
+    abstract class Employee <<abstract>> {
+        - id: String
+        - fullName: String
+        - department: String
+        - baseSalary: double
+        - hireDate: LocalDate
+        + {abstract} calculateSalary(): double
+        + {abstract} getRoleName(): String
+        + getSeniorityYears(): int
+        + toCsvLine(): String
+    }
+
+    interface Taxable <<interface>> {
+        + calculateTax(): double
+    }
+
+    class FullTimeEmployee {
+        - salaryFactor: double
+        - bonus: double
+        + calculateSalary(): double
+        + calculateTax(): double
+        + getTaxableIncome(): double
+    }
+
+    class Manager {
+        - managedCount: int
+        + {static} ALLOWANCE_PER_PERSON: double = 500000
+        + calculateSalary(): double
+        + getResponsibilityAllowance(): double
+    }
+
+    class PartTimeEmployee {
+        - workingHours: double
+        + calculateSalary(): double
+    }
+
+    class Intern {
+        + calculateSalary(): double
+    }
+
+    class TaxCalculator <<final>> {
+        + {static} LEVEL_1_LIMIT: double = 10000000
+        + {static} LEVEL_2_LIMIT: double = 20000000
+        + {static} LEVEL_3_LIMIT: double = 35000000
+        + {static} calculatePersonalIncomeTax(income: double): double
+    }
+}
+
+package "vn.edu.ptit.oop.nhom08.repository" #E8F8F5 {
+    interface EmployeeRepository <<interface>> {
+        + findAll(): List<Employee>
+        + findById(id: String): Optional<Employee>
+        + existsById(id: String): boolean
+        + save(employee: Employee): boolean
+        + update(employee: Employee): boolean
+        + deleteById(id: String): boolean
+        + getDepartments(): List<String>
+        + addDepartment(deptName: String): boolean
+        + saveChanges(): boolean
+        + backupToFile(targetFile: File): boolean
+        + restoreFromFile(sourceFile: File): boolean
+    }
+
+    class InMemoryEmployeeRepository {
+        - storage: LinkedHashMap<String, Employee>
+        - departments: Set<String>
+        - csvPath: Path
+        + loadFromCsv(path: Path): void
+        + saveToCsv(path: Path): void
+    }
+}
+
+package "vn.edu.ptit.oop.nhom08.service" #FEF9E7 {
+    class PayrollService {
+        - repository: EmployeeRepository
+        + calculateTotalPayroll(): double
+        + calculateTotalTax(): double
+        + calculateTotalNetPay(): double
+        + getAverageSalary(): double
+        + findHighestPaidEmployee(): Optional<Employee>
+        + calculatePayrollByDepartment(): Map<String, Double>
+        + calculateTaxByDepartment(): Map<String, Double>
+    }
+}
+
+package "vn.edu.ptit.oop.nhom08.common" #F4ECF7 {
+    abstract class BaseWindow <<abstract>> {
+        # statusBar: JLabel
+        + BaseWindow(title: String, w: int, h: int)
+        # setupWindow(): void
+        # {abstract} initUI(): void
+        + setStatus(msg: String): void
+    }
+}
+
+package "vn.edu.ptit.oop.nhom08.ui" #E8F6F3 {
+    class MainWindow {
+        - repository: EmployeeRepository
+        - payrollService: PayrollService
+        - employeeTableModel: EmployeeTableModel
+        - payrollTableModel: PayrollTableModel
+        # initUI(): void
+        - applyFilterAndSort(): void
+        - onAddEmployee(): void
+        - onEditEmployee(): void
+        - onDeleteEmployee(): void
+        - onExportCsv(): void
+    }
+}
+
+package "vn.edu.ptit.oop.nhom08.ui.dialogs" #FDEDEC {
+    class EmployeeFormDialog {
+        - repository: EmployeeRepository
+        - employeeToEdit: Employee
+        - cardLayout: CardLayout
+        - onSave(): void
+    }
+    class AboutDialog {
+    }
+}
+
+package "vn.edu.ptit.oop.nhom08.ui.panels" #E8F6F3 {
+    class EmployeeTableModel {
+        - employees: List<Employee>
+    }
+    class PayrollTableModel {
+        - employees: List<Employee>
+    }
+    class PayrollCellRenderer {
+    }
+}
+
+package "vn.edu.ptit.oop.nhom08.util" #F5EEF8 {
+    class EmployeeComparator {
+        - criteria: Criteria
+        + compare(e1: Employee, e2: Employee): int
+        + {static} byId(): Comparator<Employee>
+        + {static} byName(): Comparator<Employee>
+        + {static} bySalary(): Comparator<Employee>
+        + {static} bySeniority(): Comparator<Employee>
+    }
+    class ChartHelper <<final>> {
+        + {static} createDepartmentPayrollBarChart(data): JFreeChart
+        + {static} createDepartmentSharePieChart(data): JFreeChart
+    }
+    class ChartWindow {
+    }
+    class CurrencyFormatUtil <<final>> {
+        + {static} format(amount: double): String
+        + {static} formatDate(d: LocalDate): String
+    }
+    class PayslipExporter <<final>> {
+        + {static} exportToHtml(e: Employee, f: File): void
+        + {static} exportToTxt(e: Employee, f: File): void
+    }
+}
+
+package "vn.edu.ptit.oop.nhom08.exception" #FADBD8 {
+    class InvalidEmployeeDataException {
+        + InvalidEmployeeDataException(msg: String)
+    }
+}
+
+class Main <<entry point>> {
+    + {static} main(args: String[]): void
+}
+
+' QUAN HỆ KẾ THỪA VÀ HIỆN THỰC HÓA
+Employee <|-- FullTimeEmployee : Generalization
+FullTimeEmployee <|-- Manager : 2-Tier Inheritance
+Employee <|-- PartTimeEmployee : Generalization
+Employee <|-- Intern : Generalization
+Taxable <|.. FullTimeEmployee : Realization
+BaseWindow <|-- MainWindow : Generalization (Template Method)
+EmployeeRepository <|.. InMemoryEmployeeRepository : Realization
+
+' QUAN HỆ CẤU THÀNH VÀ TẬP HỢP
+MainWindow *-- EmployeeTableModel : Composition (1 to 1)
+MainWindow *-- PayrollTableModel : Composition (1 to 1)
+InMemoryEmployeeRepository *-- Employee : Storage (1 to 1..*)
+PayrollService o-- EmployeeRepository : Aggregation (1 to 1)
+MainWindow o-- EmployeeRepository : Aggregation (1 to 1)
+MainWindow o-- PayrollService : Aggregation (1 to 1)
+
+' QUAN HỆ PHỤ THUỘC & SỬ DỤNG
+Main ..> MainWindow : <<instantiate>>
+Main ..> InMemoryEmployeeRepository : <<instantiate>>
+MainWindow ..> EmployeeFormDialog : <<open>>
+MainWindow ..> AboutDialog : <<open>>
+MainWindow ..> ChartWindow : <<open>>
+FullTimeEmployee ..> TaxCalculator : <<call>>
+ChartWindow ..> ChartHelper : <<use>>
+PayrollTableModel ..> PayrollCellRenderer : <<use>>
+EmployeeFormDialog ..> InvalidEmployeeDataException : <<throws>>
+MainWindow ..> EmployeeComparator : <<use>>
+MainWindow ..> PayslipExporter : <<call>>
+
+@enduml
+
+====================================================================================================
+HẾT TỆP 00. SƠ ĐỒ KIẾN TRÚC TỔNG THỂ TOÀN HỆ THỐNG
+====================================================================================================
+

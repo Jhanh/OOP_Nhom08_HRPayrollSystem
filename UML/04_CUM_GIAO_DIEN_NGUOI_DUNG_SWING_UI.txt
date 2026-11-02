@@ -1,0 +1,247 @@
+====================================================================================================
+               HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG (PTIT)
+                   KHOA CÔNG NGHỆ THÔNG TIN - BỘ MÔN OOP
+               ĐỒ ÁN MÔN HỌC: LẬP TRÌNH HƯỚNG ĐỐI TƯỢNG (INT1332)
+====================================================================================================
+TÀI LIỆU UML CHI TIẾT: 04. CỤM GIAO DIỆN NGƯỜI DÙNG & MÔ HÌNH BẢNG (SWING UI LAYER)
+PACKAGES: vn.edu.ptit.oop.nhom08.common, ui, ui.panels, ui.dialogs
+CHUẨN THIẾT KẾ: OMG UML 2.5 SPECIFICATION
+====================================================================================================
+
+I. TỔNG QUAN VAI TRÒ TẦNG GIAO DIỆN NGƯỜI DÙNG (PRESENTATION LAYER)
+----------------------------------------------------------------------------------------------------
+Tầng Giao diện người dùng được xây dựng hoàn toàn bằng công nghệ Java Swing chuẩn mực kết hợp giao diện 
+hiện đại FlatLaf (FlatLightLaf), được tổ chức chặt chẽ theo các mẫu thiết kế hướng đối tượng kinh điển:
+
+1. TEMPLATE METHOD PATTERN (MẪU KHUÔN MẪU KHỞI TẠO CỬA SỔ):
+   - Lớp cha trừu tượng: <<abstract>> BaseWindow (kế thừa JFrame).
+   - Đóng vai trò là một "Bộ khung dựng sẵn": Cố định thứ tự nạp Icon, nạp MenuBar, nạp ToolBar, 
+     dựng thanh trạng thái StatusBar và cuối cùng gọi phương thức thuần ảo '# initUI()*'.
+   - Lớp con MainWindow kế thừa BaseWindow và chỉ việc ghi đè (Override) duy nhất phương thức '# initUI()' 
+     để vẽ nội dung bảng biểu và 2 Tab mà không cần lặp lại mã nguồn khởi dựng cửa sổ.
+
+2. MÔ HÌNH MVC (MODEL - VIEW - CONTROLLER TRÊN SWING TABLE):
+   - View: JTable trên 2 Tab giao diện (Tab 1: Hồ sơ nhân sự, Tab 2: Bảng tính lương).
+   - Model: EmployeeTableModel và PayrollTableModel kế thừa từ AbstractTableModel.
+   - Controller: MainWindow lắng nghe sự kiện, gọi Service và Repository cập nhật Model.
+   - Renderer: PayrollCellRenderer kế thừa DefaultTableCellRenderer để kẻ sọc zebra, định dạng số tiền 
+     căn lề phải (#,##0 VNĐ), và tô nền nổi bật cho các ô quan trọng.
+
+3. HỘP THOẠI ĐA HÌNH VỚI CARDLAYOUT:
+   - EmployeeFormDialog (extends JDialog): Ứng dụng CardLayout để chuyển đổi linh hoạt các trường nhập liệu
+     cho 4 loại nhân sự (FullTime, PartTime, Intern, Manager) mà không cần tạo 4 Dialog riêng biệt.
+
+====================================================================================================
+II. BẢN VẼ SƠ ĐỒ LỚP CHI TIẾT CỤM UI (ASCII CLASS DIAGRAM)
+----------------------------------------------------------------------------------------------------
+
+                        ┌──────────────────────────────────────────────────────────────┐
+                        │                         <<abstract>>                         │
+                        │                          BaseWindow                          │
+                        │                  (Template Method Pattern)                   │
+                        ├──────────────────────────────────────────────────────────────┤
+                        │ # menuBar: JMenuBar                                          │
+                        │ # fileMenu, viewMenu, helpMenu: JMenu                        │
+                        │ # toolBar: JToolBar                                          │
+                        │ # statusBar: JPanel                                          │
+                        │ # statusLabel: JLabel                                        │
+                        ├──────────────────────────────────────────────────────────────┤
+                        │ + BaseWindow(title: String, width: int, height: int)         │
+                        │ # {abstract} initUI(): void                                  │
+                        │ # setupWindow(): void                                        │
+                        │ # setStatus(msg: String): void                               │
+                        │ # showAbout(): void                                          │
+                        │ # addToolButton(icon, tooltip, action): JButton              │
+                        │ # {static} loadImageIcon(path: String): ImageIcon            │
+                        └──────────────────────────────▲───────────────────────────────┘
+                                                       │
+                                                       │ ────▷ Generalization (extends)
+                                                       │
+                        ┌──────────────────────────────┴───────────────────────────────┐
+                        │                         <<concrete>>                         │
+                        │                          MainWindow                          │
+                        ├──────────────────────────────────────────────────────────────┤
+                        │ - repository: EmployeeRepository                             │
+                        │ - payrollService: PayrollService                             │
+                        │ - employeeTableModel: EmployeeTableModel                     │
+                        │ - payrollTableModel: PayrollTableModel                       │
+                        │ - tabbedPane: JTabbedPane                                    │
+                        │ - txtSearch: JTextField                                      │
+                        │ - cboDepartmentFilter: JComboBox<String>                     │
+                        │ - cboSortCriteria: JComboBox<String>                         │
+                        │ - btnSortDirection: JButton                                  │
+                        │ - isSortAscending: boolean = true                            │
+                        ├──────────────────────────────────────────────────────────────┤
+                        │ + MainWindow(repo: EmployeeRepo, service: PayrollService)    │
+                        │ # {override} initUI(): void                                  │
+                        │ - applyFilterAndSort(): void                                 │
+                        │ - {static} matchesFullName(fullName: String, kw: String): b  │
+                        │ - {static} removeAccents(text: String): String               │
+                        │ - onAddEmployee(): void                                      │
+                        │ - onEditEmployee(): void                                     │
+                        │ - onDeleteEmployee(): void                                   │
+                        │ - onExportCsv(): void                                        │
+                        │ - onExportPayslip(): void                                    │
+                        │ - onShowChart(): void                                        │
+                        │ - onBackup(): void                                           │
+                        │ - onRestore(): void                                          │
+                        │ - onAddNewDepartment(): void                                 │
+                        └───────┬──────────────────────┬──────────────────────┬────────┘
+                                │                      │                      │
+       ┌────────────────────────┘                      │                      └────────────────────────┐
+       │ ◆ 1 (Composition)                             │ ◆ 1 (Composition)                             │ <<dependency>>
+       │ Sở hữu trọn đời                               │ Sở hữu trọn đời                               │ Mở hộp thoại
+       ▼                                               ▼                                               ▼
+┌──────────────────────────────┐        ┌──────────────────────────────┐        ┌──────────────────────────────┐
+│      EmployeeTableModel      │        │      PayrollTableModel       │        │     EmployeeFormDialog       │
+│  (Tab 1: Hồ Sơ Nhân Viên)    │        │  (Tab 2: Tính Lương & Thuế)  │        │   (CardLayout Thêm/Sửa)      │
+├──────────────────────────────┤        ├──────────────────────────────┤        ├──────────────────────────────┤
+│ - employees: List<Employee>  │        │ - employees: List<Employee>  │        │ - repository: EmployeeRepo   │
+│ - COLUMN_NAMES: String[]     │        │ - COLUMN_NAMES: String[]     │        │ - employeeToEdit: Employee   │
+├──────────────────────────────┤        ├──────────────────────────────┤        │ - cardLayout: CardLayout     │
+│ + getRowCount(): int         │        │ + getRowCount(): int         │        │ - cboEmployeeType: JComboBox │
+│ + getColumnCount(): int      │        │ + getColumnCount(): int      │        ├──────────────────────────────┤
+│ + getValueAt(r, c): Object   │        │ + getValueAt(r, c): Object   │        │ + EmployeeFormDialog(...)    │
+│ + getColumnName(col): String │        │ + getColumnName(col): String │        │ - onSave(): void             │
+│ + setEmployees(list): void   │        │ + setEmployees(list): void   │        │ - validateInputs(): void     │
+└──────────────────────────────┘        └──────────────┬───────────────┘        └──────────────────────────────┘
+                                                       │
+                                                       │ uses
+                                                       ▼
+                                        ┌──────────────────────────────┐        ┌──────────────────────────────┐
+                                        │     PayrollCellRenderer      │        │         AboutDialog          │
+                                        │  (Zebra Striping, Alignment) │        │     (Thông Tin Giới Thiệu)   │
+                                        ├──────────────────────────────┤        ├──────────────────────────────┤
+                                        │ + getTableCellRenderer-     │        │ + AboutDialog(parent: JFrame)│
+                                        │   Component(...): Component  │        └──────────────────────────────┘
+                                        └──────────────────────────────┘
+
+====================================================================================================
+III. BẢNG PHÂN TÍCH QUAN HỆ KIẾN TRÚC TRONG CỤM UI
+----------------------------------------------------------------------------------------------------
+
+1. QUAN HỆ KẾ THỪA (GENERALIZATION):
+   - MainWindow extends BaseWindow:
+     Lớp con tái sử dụng toàn bộ thanh menu, thanh công cụ, icon và chỉ cần thực thi phương thức 
+     thuần ảo '# initUI()' để hoàn tất cấu trúc giao diện riêng.
+
+2. QUAN HỆ CẤU THÀNH CHẶT CHẼ (COMPOSITION):
+   - MainWindow *-- EmployeeTableModel (1 - 1)
+   - MainWindow *-- PayrollTableModel (1 - 1)
+   Phân tích: Hai TableModel được khởi tạo bên trong MainWindow. Nếu MainWindow bị đóng và giải phóng,
+   hai TableModel này cũng chấm dứt vòng đời. Đây là quan hệ Composition chặt chẽ (hình thoi đặc).
+
+3. QUAN HỆ TẬP HỢP (AGGREGATION):
+   - MainWindow o-- EmployeeRepository (1 - 1)
+   - MainWindow o-- PayrollService (1 - 1)
+   Phân tích: MainWindow nhận Repository và PayrollService từ bên ngoài truyền vào thông qua Constructor 
+   (Dependency Injection). Hai dịch vụ này có vòng đời độc lập với MainWindow.
+
+4. QUAN HỆ PHỤ THUỘC (DEPENDENCY):
+   - MainWindow ..> EmployeeFormDialog: Khi người dùng bấm Thêm/Sửa, MainWindow tạo biến cục bộ 
+     mở hộp thoại JDialog modal và cập nhật lại bảng khi dialog đóng.
+   - MainWindow ..> ChartWindow: Khi người dùng bấm nút Xem Biểu Đồ, MainWindow kích hoạt cửa sổ 
+     ChartWindow để vẽ biểu đồ thống kê JFreeChart.
+
+====================================================================================================
+IV. MÃ NGUỒN PLANTUML CHUYÊN BIỆT CHO CỤM UI
+(Copy-paste vào https://www.planttext.com để render ảnh)
+----------------------------------------------------------------------------------------------------
+
+@startuml
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+
+title CỤM GIAO DIỆN NGƯỜI DÙNG SWING UI & TABLE MODELS (OOP NHÓM 08)
+
+abstract class BaseWindow <<abstract>> {
+    # menuBar: JMenuBar
+    # toolBar: JToolBar
+    # statusBar: JPanel
+    # statusLabel: JLabel
+    + BaseWindow(title: String, width: int, height: int)
+    # {abstract} initUI(): void
+    # setupWindow(): void
+    # setStatus(msg: String): void
+    # showAbout(): void
+    # addToolButton(iconPath: String, tooltip: String, action: ActionListener): JButton
+}
+
+class MainWindow {
+    - repository: EmployeeRepository
+    - payrollService: PayrollService
+    - employeeTableModel: EmployeeTableModel
+    - payrollTableModel: PayrollTableModel
+    - tabbedPane: JTabbedPane
+    - txtSearch: JTextField
+    - cboDepartmentFilter: JComboBox<String>
+    - cboSortCriteria: JComboBox<String>
+    - isSortAscending: boolean
+    + MainWindow(repo: EmployeeRepository, service: PayrollService)
+    # {override} initUI(): void
+    - applyFilterAndSort(): void
+    - {static} matchesFullName(fullName: String, keyword: String): boolean
+    - {static} removeAccents(text: String): String
+    - onAddEmployee(): void
+    - onEditEmployee(): void
+    - onDeleteEmployee(): void
+    - onExportCsv(): void
+    - onExportPayslip(): void
+    - onShowChart(): void
+    - onBackup(): void
+    - onRestore(): void
+}
+
+class EmployeeTableModel {
+    - employees: List<Employee>
+    + getRowCount(): int
+    + getColumnCount(): int
+    + getValueAt(row: int, col: int): Object
+    + getColumnName(col: int): String
+    + setEmployees(list: List<Employee>): void
+}
+
+class PayrollTableModel {
+    - employees: List<Employee>
+    + getRowCount(): int
+    + getColumnCount(): int
+    + getValueAt(row: int, col: int): Object
+    + getColumnName(col: int): String
+    + setEmployees(list: List<Employee>): void
+}
+
+class PayrollCellRenderer {
+    + getTableCellRendererComponent(...): Component
+}
+
+class EmployeeFormDialog {
+    - repository: EmployeeRepository
+    - employeeToEdit: Employee
+    - cardLayout: CardLayout
+    + EmployeeFormDialog(parent: JFrame, repo: EmployeeRepository, emp: Employee)
+    - onSave(): void
+    - validateInputs(): void
+}
+
+class AboutDialog {
+    + AboutDialog(parent: JFrame)
+}
+
+' Mối quan hệ
+BaseWindow <|-- MainWindow : <<extends>> Template Method
+MainWindow *-- EmployeeTableModel : <<composition>> (1 to 1)
+MainWindow *-- PayrollTableModel : <<composition>> (1 to 1)
+PayrollTableModel ..> PayrollCellRenderer : <<uses>>
+MainWindow ..> EmployeeFormDialog : <<opens modal>>
+MainWindow ..> AboutDialog : <<opens modal>>
+
+@enduml
+
+====================================================================================================
+HẾT TỆP 04. CỤM GIAO DIỆN NGƯỜI DÙNG & MÔ HÌNH BẢNG
+====================================================================================================
+

@@ -1,0 +1,184 @@
+====================================================================================================
+               HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG (PTIT)
+                   KHOA CÔNG NGHỆ THÔNG TIN - BỘ MÔN OOP
+               ĐỒ ÁN MÔN HỌC: LẬP TRÌNH HƯỚNG ĐỐI TƯỢNG (INT1332)
+====================================================================================================
+TÀI LIỆU UML CHI TIẾT: 03. CỤM NGHIỆP VỤ TÍNH LƯƠNG & THỐNG KÊ TÀI CHÍNH (SERVICE LAYER)
+PACKAGE: vn.edu.ptit.oop.nhom08.service
+CHUẨN THIẾT KẾ: OMG UML 2.5 SPECIFICATION
+====================================================================================================
+
+I. TỔNG QUAN VAI TRÒ TẦNG DỊCH VỤ (SERVICE LAYER ARCHITECTURE)
+----------------------------------------------------------------------------------------------------
+Tầng Dịch vụ (Service Layer) đóng vai trò là "Bộ não tính toán" của doanh nghiệp. Nó tách biệt hoàn toàn 
+các phép toán tài chính, thuật toán thống kê tổng hợp ra khỏi Giao diện người dùng (Swing UI) và Tầng 
+lưu trữ (Repository):
+1. Không phụ thuộc vào Giao diện (UI-Agnostic): PayrollService hoàn toàn không chứa bất kỳ thư viện đồ họa 
+   Swing/AWT nào (không JFrame, không JTable). Nhờ vậy, service này có thể tái sử dụng dễ dàng cho Web API, 
+   CLI Console, hoặc Mobile Backend mà không cần sửa đổi dù chỉ 1 dòng code.
+2. Tiêm phụ thuộc qua Hàm khởi tạo (Constructor Dependency Injection):
+   - PayrollService không tự ý 'new' một Repository cụ thể, mà nhận 'EmployeeRepository' thông qua Constructor.
+   - Giúp hệ thống đạt độ lỏng lẻo cao (Loose Coupling), dễ dàng viết Unit Test (bằng Mock Repository).
+3. Đóng gói thuật toán tài chính doanh nghiệp:
+   - Tính tổng quỹ lương gộp (Total Gross Payroll).
+   - Tính tổng nghĩa vụ thuế TNCN doanh nghiệp phải trích nộp (Total Tax).
+   - Tính tổng lương thực lĩnh chi trả cho người lao động (Total Net Salary).
+   - Thống kê quỹ lương và số lượng nhân sự phân bổ theo từng phòng ban (Department Analytics).
+   - Thống kê tỷ trọng theo hình thức lao động (FullTime, PartTime, Intern, Manager).
+   - Tra cứu nhân viên có mức lương cao nhất, mức lương trung bình toàn công ty.
+
+====================================================================================================
+II. BẢN VẼ SƠ ĐỒ LỚP CHI TIẾT CỤM SERVICE (ASCII CLASS DIAGRAM)
+----------------------------------------------------------------------------------------------------
+
+                        ┌──────────────────────────────────────────────────────────────┐
+                        │                        <<concrete>>                          │
+                        │                        PayrollService                        │
+                        ├──────────────────────────────────────────────────────────────┤
+                        │ - repository: EmployeeRepository                             │
+                        ├──────────────────────────────────────────────────────────────┤
+                        │ + PayrollService(repository: EmployeeRepository)             │
+                        │ + calculateTotalPayroll(): double                            │
+                        │ + calculateTotalTax(): double                                │
+                        │ + calculateTotalNetSalary(): double                          │
+                        │ + calculatePayrollByDepartment(): Map<String, Double>        │
+                        │ + countEmployeesByDepartment(): Map<String, Long>            │
+                        │ + countEmployeesByType(): Map<String, Long>                  │
+                        │ + getTotalEmployeeCount(): int                               │
+                        │ + calculateAverageSalary(): double                           │
+                        │ + findHighestPaidEmployee(): Optional<Employee>              │
+                        │ + getStatusBarSummary(): String                              │
+                        └──────────────┬───────────────────────────────┬───────────────┘
+                                       │                               │
+                                       │ ◇ 1 (Aggregation)             │ <<dependency>>
+                                       │ Constructor Injection         │ calls static methods
+                                       ▼                               ▼
+        ┌──────────────────────────────────────────────┐ ┌─────────────────────────────┐
+        │                <<interface>>                 │ │    <<final>> <<utility>>    │
+        │              EmployeeRepository              │ │        TaxCalculator        │
+        ├──────────────────────────────────────────────┤ ├─────────────────────────────┤
+        │ + findAll(): List<Employee>                  │ │ + calculateTax(e): double   │
+        │ + count(): int                               │ │ + calculateNetSalary(e): d  │
+        │ + ...                                        │ │ + calculateTotalTax(list): d│
+        └──────────────────────┬───────────────────────┘ └─────────────────────────────┘
+                               │
+                               │ uses
+                               ▼
+                ┌──────────────────────────────┐
+                │         <<abstract>>         │
+                │           Employee           │
+                ├──────────────────────────────┤
+                │ + calculateSalary(): double  │
+                │ + getDepartment(): String    │
+                │ + getEmployeeType(): String  │
+                └──────────────────────────────┘
+
+====================================================================================================
+III. BẢNG PHÂN TÍCH THUẬT TOÁN & PHƯƠNG THỨC TRONG PAYROLLSERVICE
+----------------------------------------------------------------------------------------------------
+STT| Tên Phương Thức                 | Kiểu Trả Về            | Bản Chất Thuật Toán & Công Thức Nghiệp Vụ
+---+---------------------------------+------------------------+--------------------------------------------------
+1  | calculateTotalPayroll()         | double                 | Duyệt toàn bộ repository.findAll(), cộng dồn
+   |                                 |                        | e.calculateSalary(). (Đa hình lúc chạy).
+2  | calculateTotalTax()             | double                 | Gọi TaxCalculator.calculateTotalTax(list), trích
+   |                                 |                        | thuế lũy tiến từng phần của các nhân sự Taxable.
+3  | calculateTotalNetSalary()       | double                 | Tổng thực lĩnh = Tổng(e.calculateSalary() - thuế).
+4  | calculatePayrollByDepartment()  | Map<String, Double>    | Gom nhóm theo phòng ban, tính tổng quỹ lương từng
+   |                                 |                        | phòng (phục vụ biểu đồ tròn / cột JFreeChart).
+5  | countEmployeesByDepartment()    | Map<String, Long>      | Đếm số lượng nhân sự trong mỗi phòng ban.
+6  | countEmployeesByType()          | Map<String, Long>      | Đếm phân bổ theo loại: FullTime, PartTime, Intern.
+7  | getTotalEmployeeCount()         | int                    | Ủy quyền cho repository.count(), trả về sĩ số.
+8  | calculateAverageSalary()        | double                 | Lương bình quân = calculateTotalPayroll() / tổng số.
+9  | findHighestPaidEmployee()       | Optional<Employee>     | Thuật toán tìm Max tuyến tính O(N), an toàn với
+   |                                 |                        | Optional.empty() khi công ty chưa có nhân viên.
+10 | getStatusBarSummary()           | String                 | Định dạng chuỗi tóm tắt tài chính trên thanh status.
+
+====================================================================================================
+IV. ĐIỂM SÁNG OOP & NGUYÊN LÝ THIẾT KẾ TRONG CỤM SERVICE
+----------------------------------------------------------------------------------------------------
+
+1. ÁP DỤNG ĐA HÌNH KHI TÍNH QUỸ LƯƠNG:
+   Trong hàm calculateTotalPayroll():
+   ```java
+   double total = 0.0;
+   for (Employee e : repository.findAll()) {
+       total += e.calculateSalary(); // Dynamic Binding tại đây!
+   }
+   return total;
+   ```
+   - 'e' là tham chiếu lớp cha Employee. JVM tự động tra bảng vtable tại Runtime để gọi hàm tính lương 
+     của đúng lớp con cụ thể. Không cần bất kỳ lệnh 'instanceof' hay 'switch-case' nào!
+
+2. TIÊM PHỤ THUỘC (DEPENDENCY INJECTION):
+   ```java
+   public PayrollService(EmployeeRepository repository) {
+       this.repository = Objects.requireNonNull(repository);
+   }
+   ```
+   - Thể hiện mối quan hệ Tập hợp (Aggregation): PayrollService "chứa" EmployeeRepository, nhưng vòng đời 
+     của Repository không bị ràng buộc vào Service. Repository được tạo ra trước ở Main và bơm vào Service.
+
+3. NGUYÊN TẮC TRÁCH NHIỆM DUY NHẤT (SINGLE RESPONSIBILITY PRINCIPLE - SRP):
+   - Tầng UI chỉ lo hiển thị.
+   - Tầng Repository chỉ lo lưu trữ dữ liệu.
+   - PayrollService chỉ lo tính toán logic tài chính.
+   Mỗi lớp chỉ có duy nhất một lý do để thay đổi!
+
+====================================================================================================
+V. MÃ NGUỒN PLANTUML CHUYÊN BIỆT CHO CỤM SERVICE
+(Copy-paste vào https://www.planttext.com để render ảnh)
+----------------------------------------------------------------------------------------------------
+
+@startuml
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+
+title CỤM SERVICE LAYER - TÍNH TOÁN LƯƠNG & THỐNG KÊ TÀI CHÍNH (OOP NHÓM 08)
+
+class PayrollService {
+    - repository: EmployeeRepository
+    + PayrollService(repository: EmployeeRepository)
+    + calculateTotalPayroll(): double
+    + calculateTotalTax(): double
+    + calculateTotalNetSalary(): double
+    + calculatePayrollByDepartment(): Map<String, Double>
+    + countEmployeesByDepartment(): Map<String, Long>
+    + countEmployeesByType(): Map<String, Long>
+    + getTotalEmployeeCount(): int
+    + calculateAverageSalary(): double
+    + findHighestPaidEmployee(): Optional<Employee>
+    + getStatusBarSummary(): String
+}
+
+interface EmployeeRepository <<interface>> {
+    + findAll(): List<Employee>
+    + count(): int
+}
+
+abstract class Employee <<abstract>> {
+    + calculateSalary(): double
+    + getDepartment(): String
+    + getEmployeeType(): String
+}
+
+class TaxCalculator <<final>> {
+    + {static} calculateTax(e: Employee): double
+    + {static} calculateNetSalary(e: Employee): double
+    + {static} calculateTotalTax(list: List<Employee>): double
+}
+
+' Mối quan hệ
+PayrollService o-- EmployeeRepository : <<injects>> Aggregation (1 to 1)
+PayrollService ..> Employee : <<uses in loop>>
+PayrollService ..> TaxCalculator : <<calls>>
+
+@enduml
+
+====================================================================================================
+HẾT TỆP 03. CỤM NGHIỆP VỤ TÍNH LƯƠNG & THỐNG KÊ TÀI CHÍNH
+====================================================================================================
+
