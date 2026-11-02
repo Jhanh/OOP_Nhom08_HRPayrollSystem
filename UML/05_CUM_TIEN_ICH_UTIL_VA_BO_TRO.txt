@@ -1,249 +1,125 @@
-====================================================================================================
-               HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG (PTIT)
-                   KHOA CÔNG NGHỆ THÔNG TIN - BỘ MÔN OOP
-               ĐỒ ÁN MÔN HỌC: LẬP TRÌNH HƯỚNG ĐỐI TƯỢNG (INT1332)
-====================================================================================================
-TÀI LIỆU UML CHI TIẾT: 05. CỤM TIỆN ÍCH, SẮP XẾP, BIỂU ĐỒ & XUẤT BÁO CÁO (CROSS-CUTTING UTILS)
+========================================================================================================================
+                                     HỌC VIỆN CÔNG NGHỆ BƯU CHÍNH VIỄN THÔNG (PTIT)
+                                           LẬP TRÌNH HƯỚNG ĐỐI TƯỢNG (INT1332)
+========================================================================================================================
+TÀI LIỆU UML CHI TIẾT: 05. CỤM TIỆN ÍCH, COMPARATOR, BIỂU ĐỒ & EXPORTER (CROSS-CUTTING UTILS)
 PACKAGES: vn.edu.ptit.oop.nhom08.util & vn.edu.ptit.oop.nhom08 (Main)
-CHUẨN THIẾT KẾ: OMG UML 2.5 SPECIFICATION
-====================================================================================================
+========================================================================================================================
 
 I. TỔNG QUAN VAI TRÒ CỤM TIỆN ÍCH DÙNG CHUNG (CROSS-CUTTING CONCERNS)
-----------------------------------------------------------------------------------------------------
-Cụm tiện ích (Utility Layer) bao gồm các lớp bổ trợ chuyên biệt, cung cấp các giải pháp kỹ thuật nâng cao 
-xuyên suốt cho toàn bộ hệ thống:
+------------------------------------------------------------------------------------------------------------------------
+Cụm tiện ích (Utility Layer) bao gồm các lớp bổ trợ chuyên biệt, cung cấp các giải pháp kỹ thuật nâng cao xuyên suốt 
+toàn bộ hệ thống:
 
 1. CHIẾN LƯỢC SẮP XẾP ĐA TIÊU CHÍ (STRATEGY PATTERN VỚI COMPARATOR):
-   - EmployeeComparator hiện thực hóa Interface chuẩn của Java: 'java.util.Comparator<Employee>'.
-   - Ứng dụng mô hình Chuỗi so sánh động (Comparator Chaining: 'comparing(...).thenComparing(...)').
-   - Hỗ trợ sắp xếp tiếng Việt chuẩn xác bằng 'java.text.Collator' theo chuẩn từ điển tiếng Việt (Locale "vi-VN"),
-     sắp xếp theo Tên thay vì theo Họ.
+   - EmployeeComparator hiện thực hóa Interface 'java.util.Comparator<Employee>'.
+   - Ứng dụng chuỗi so sánh động linh hoạt: 'comparing(...).thenComparing(...)'.
+   - Hỗ trợ sắp xếp tiếng Việt chuẩn xác bằng 'java.text.Collator' theo Locale Việt Nam ("vi-VN"), sắp xếp theo Tên thay
+     vì theo Họ của nhân viên.
 
 2. BỘ TẠO BIỂU ĐỒ ĐỒ HỌA JFREECHART:
-   - ChartHelper: Lớp tiện ích tĩnh khởi tạo các biểu đồ trực quan (Biểu đồ cột BarChart phân bổ quỹ lương 
-     theo phòng ban và Biểu đồ tròn PieChart tỷ trọng chi phí).
+   - ChartHelper: Tiện ích tĩnh khởi tạo biểu đồ cột BarChart (quỹ lương phòng ban) và biểu đồ tròn PieChart (tỷ trọng).
    - DeptSummary: DTO tĩnh đóng gói dữ liệu thống kê tổng hợp của từng phòng ban.
    - ChartWindow: Cửa sổ JFrame hiển thị các tab đồ họa JFreeChart và hỗ trợ xuất ảnh biểu đồ PNG.
 
 3. ĐỊNH DẠNG TIỀN TỆ & NGÀY THÁNG CHUẨN VIỆT NAM:
-   - CurrencyFormatUtil: Định dạng tiền tệ theo quy chuẩn kế toán Việt Nam (#,##0 VNĐ), ngăn cách hàng nghìn 
-     bằng dấu chấm '.', số thập phân bằng dấu phẩy ',', và định dạng ngày tháng 'dd/MM/yyyy'.
+   - CurrencyFormatUtil: Định dạng tiền tệ VNĐ (#,##0 VNĐ), ngăn cách hàng nghìn bằng dấu '.', phần thập phân bằng dấu 
+     ',', và định dạng ngày tháng 'dd/MM/yyyy'.
 
 4. BỘ XUẤT PHIẾU LƯƠNG ĐA ĐỊNH DẠNG (PAYSLIP EXPORTER):
-   - PayslipExporter: Xuất phiếu lương cá nhân chi tiết và bảng lương toàn doanh nghiệp ra 3 định dạng: 
-     Văn bản thuần (.txt), Trang web đồ họa (.html với CSS Responsive hiện đại), và Tệp bảng tính (.csv).
+   - PayslipExporter: Xuất phiếu lương cá nhân và bảng lương toàn doanh nghiệp ra 3 định dạng: Văn bản (.txt), Trang 
+     web (.html với giao diện responsive) và Bảng tính (.csv).
 
 5. ĐIỂM VÀO ỨNG DỤNG (ENTRY POINT):
-   - Main: Khởi động giao diện FlatLaf Look & Feel trên Event Dispatch Thread (EDT).
+   - Main: Khởi động giao diện FlatLightLaf Look & Feel trên luồng Event Dispatch Thread (EDT).
 
-====================================================================================================
-II. BẢN VẼ SƠ ĐỒ LỚP CHI TIẾT CỤM UTILITIES (ASCII CLASS DIAGRAM)
-----------------------------------------------------------------------------------------------------
+========================================================================================================================
+II. BẢN VẼ SƠ ĐỒ LỚP CHI TIẾT CỤM TIỆN ÍCH DÙNG CHUNG (EXPANDED UTILITIES & SUPPORTING CLASS DIAGRAM)
+------------------------------------------------------------------------------------------------------------------------
 
-                        ┌──────────────────────────────────────────────────────────────┐
-                        │                        <<interface>>                         │
-                        │                 java.util.Comparator<Employee>               │
-                        ├──────────────────────────────────────────────────────────────┤
-                        │ + compare(o1: Employee, o2: Employee): int                   │
-                        └──────────────────────────────▲───────────────────────────────┘
-                                                       │
-                                                       │ ┄┄▷ Realization (implements)
-                                                       │
-                        ┌──────────────────────────────┴───────────────────────────────┐
-                        │                         <<concrete>>                         │
-                        │                      EmployeeComparator                      │
-                        ├──────────────────────────────────────────────────────────────┤
-                        │ - {static} {final} VN_COLLATOR: Collator                     │
-                        │ - comparatorChain: Comparator<Employee>                      │
-                        ├──────────────────────────────────────────────────────────────┤
-                        │ + EmployeeComparator()                                       │
-                        │ + EmployeeComparator(criteriaList: Criteria...)              │
-                        │ + {override} compare(e1: Employee, e2: Employee): int        │
-                        │ + {static} byId(): Comparator<Employee>                      │
-                        │ + {static} byName(): Comparator<Employee>                    │
-                        │ + {static} bySalary(): Comparator<Employee>                  │
-                        │ + {static} bySeniority(): Comparator<Employee>               │
-                        │ + {static} byDepartment(): Comparator<Employee>              │
-                        │ + {static} byEmployeeType(): Comparator<Employee>            │
-                        └──────────────────────────────┬───────────────────────────────┘
-                                                       │
-                                                       │ owns inner enum
-                                                       ▼
-                                        ┌──────────────────────────────┐
-                                        │          <<enum>>            │
-                                        │           Criteria           │
-                                        ├──────────────────────────────┤
-                                        │ DEPARTMENT                   │
-                                        │ EMPLOYEE_TYPE                │
-                                        │ SALARY_DESC                  │
-                                        │ SALARY_ASC                   │
-                                        │ NAME                         │
-                                        │ ID                           │
-                                        │ SENIORITY_DESC               │
-                                        └──────────────────────────────┘
-
-┌──────────────────────────────────────────────┐        ┌──────────────────────────────────────────────┐
-│            <<final>> <<utility>>             │        │                 <<concrete>>                 │
-│                 ChartHelper                  │        │                 ChartWindow                  │
-├──────────────────────────────────────────────┤        ├──────────────────────────────────────────────┤
-│ - ChartHelper()                              │        │ - chartTabbedPane: JTabbedPane               │
-│ + {static} calculateDeptSummaries(list): Map │        │ - barChartPanel: ChartPanel                  │
-│ + {static} createDepartmentPayrollBarChart() │◀───────┤ - pieChartPanel: ChartPanel                  │
-│ + {static} createDepartmentSharePieChart()   │  uses  ├──────────────────────────────────────────────┤
-└──────────────────────┬───────────────────────┘        │ + ChartWindow(employees: List<Employee>)     │
-                       │                                └──────────────────────────────────────────────┘
+                                                              ┌─────────────────────────────────────────────────────────────┐
+                                                              │                        <<interface>>                        │
+                                                              │               java.util.Comparator<Employee>                │
+                                                              ├─────────────────────────────────────────────────────────────┤
+                                                              │ + compare(o1: Employee, o2: Employee): int                  │
+                                                              └──────────────────────────────▲──────────────────────────────┘
+                                                                                             ┆
+                                                                                             ┆ ┄┄▷ Realization (implements)
+                                                                                             ┆
+┌─────────────────────────────────────────────────────────────┐               ┌──────────────┴──────────────────────────────┐               ┌─────────────────────────────────────────────────────────────┐
+│                       <<entry point>>                       │               │                <<concrete>>                 │               │                    <<final>> <<utility>>                    │
+│                            Main                             │               │             EmployeeComparator              │               │                     CurrencyFormatUtil                      │
+├─────────────────────────────────────────────────────────────┤               ├─────────────────────────────────────────────┤               ├─────────────────────────────────────────────────────────────┤
+│ + {static} main(args: String[]): void                       │               │ - {static} {final} VN_COLLATOR: Collator    │               │ - {static} {final} PATTERN: String = "#,##0"                │
+│   // 1. FlatLightLaf.setup()                                │               │ - comparatorChain: Comparator<Employee>     │               │ - {static} {final} DATE_FORMAT: String = "dd/MM/yyyy"       │
+│   // 2. SwingUtilities.invokeLater(EDT)                     │               ├─────────────────────────────────────────────┤               ├─────────────────────────────────────────────────────────────┤
+│   // 3. Khởi tạo: Repo -> Service -> MainWindow             │               │ + EmployeeComparator(criteriaList: Crit...) │               │ + {static} formatVnd(amount: double): String                │
+└───────┬─────────────────────────────────────────────────────┘               │ + {override} compare(e1, e2): int           │               │ + {static} formatVndCompact(amount: double): String         │
+        │                                                                     │ + {static} byId(): Comparator<Employee>     │               │ + {static} formatDate(date: LocalDate): String              │
+        │ ┄┄┄┄> <<instantiates & runs>>                                       │ + {static} byName(): Comparator<Employee>   │               │ + {static} parseDate(dateStr: String): LocalDate            │
+        │ Khởi tạo toàn bộ luồng GUI trên EDT                                 │ + {static} bySalary(): Comparator<Employee> │               └─────────────────────────────────────────────────────────────┘
+        ▼                                                                     │ + {static} bySeniority(): Comparator<Emp>   │                                              ▲
+┌─────────────────────────────────────────────────────────────┐               │ + {static} byDepartment(): Comparator<Emp>  │                                              │
+│                        <<concrete>>                         │               │ + {static} byEmployeeType(): Comparator<Emp>│                                              │ ┄┄┄┄> calls static formatting
+│                         MainWindow                          │               └───────┬─────────────────────────────────────┘                                              │ Định dạng số tiền và ngày tháng
+├─────────────────────────────────────────────────────────────┤                       │                                                                                    │
+│ - applyFilterAndSort(): void                                │                       │ owns static inner enum                                                             │
+│   // Gọi EmployeeComparator theo tiêu chí người dùng        │                       ▼                                                             ┌──────────────────────┴──────────────────────┐
+│ - onShowChart(): void -> new ChartWindow(...)               │        ┌─────────────────────────────┐                                              │            <<final>> <<utility>>            │
+│ - onExportPayslip(): void -> PayslipExporter                │        │          <<enum>>           │                                              │               PayslipExporter               │
+└───────┬─────────────────────────────────────────────┬───────┘        │          Criteria           │                                              ├─────────────────────────────────────────────┤
+        │                                             │                ├─────────────────────────────┤                                              │ + {static} exportSingleTxt(e, file): boolean│
+        │ ┄┄┄┄> <<open window>>                       │                │ DEPARTMENT                  │                                              │ + {static} exportSingleHtml(e, f): boolean  │
+        ▼                                             │                │ EMPLOYEE_TYPE               │                                              │ + {static} exportPayrollCsv(l, f): boolean  │
+┌─────────────────────────────────────────────┐       │                │ SALARY_DESC                 │                                              └─────────────────────────────────────────────┘
+│                <<concrete>>                 │       │                │ SALARY_ASC                  │
+│                 ChartWindow                 │       │                │ NAME                        │
+├─────────────────────────────────────────────┤       │                │ ID                          │
+│ - chartTabbedPane: JTabbedPane              │       │                │ SENIORITY_DESC              │
+│ - barChartPanel, pieChartPanel: ChartPanel  │       │                └─────────────────────────────┘
+├─────────────────────────────────────────────┤       │
+│ + ChartWindow(employees: List<Employee>)    │       │ ┄┄┄┄> <<delegates export>>
+└──────────────────────┬──────────────────────┘       │ Gọi xuất phiếu lương TXT / HTML và bảng lương CSV
+                       │                              ▼
+                       │ uses                    ┌─────────────────────────────────────────────────────────────┐
+                       ▼                         │                        <<exception>>                        │
+┌─────────────────────────────────────────────┐  │                InvalidEmployeeDataException                 │
+│            <<final>> <<utility>>            │  ├─────────────────────────────────────────────────────────────┤
+│                 ChartHelper                 │  │ - fieldName: String                                         │
+├─────────────────────────────────────────────┤  │ - invalidValue: Object                                      │
+│ + {static} calculateDeptSummaries(list): Map│  ├─────────────────────────────────────────────────────────────┤
+│ + {static} createDepartmentPayrollBarChart()│  │ + InvalidEmployeeDataException(message: String)             │
+│ + {static} createDepartmentSharePieChart()  │  │ + getFieldName(): String / getInvalidValue(): Object        │
+└──────────────────────┬──────────────────────┘  └─────────────────────────────────────────────────────────────┘
                        │ defines static inner DTO
                        ▼
-┌──────────────────────────────────────────────┐        ┌──────────────────────────────────────────────┐
-│       <<final>> <<static>> DeptSummary       │        │            <<final>> <<utility>>             │
-├──────────────────────────────────────────────┤        │              CurrencyFormatUtil              │
-│ - department: String                         │        ├──────────────────────────────────────────────┤
-│ - count: int                                 │        │ - {static} {final} PATTERN: String = "#,##0" │
-│ - gross: double                              │        │ - {static} {final} SYMBOLS: DecimalFormat... │
-│ - tax: double                                │        │ - {static} {final} DATE_FORMATTER: DateTime..│
-│ - net: double                                │        ├──────────────────────────────────────────────┤
-├──────────────────────────────────────────────┤        │ + {static} format(amount: double): String    │
-│ + getDepartment(): String                    │        │ + {static} formatWithUnit(amount): String    │
-│ + getCount(): int                            │        │ + {static} parse(text: String): double       │
-│ + getGross(): double                         │        │ + {static} formatDate(d: LocalDate): String │
-│ + getTax(): double                           │        │ + {static} parseDate(text: String): LocalDate│
-│ + getNet(): double                           │        └──────────────────────────────────────────────┘
-└──────────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│      <<final>> <<static>> DeptSummary       │
+├─────────────────────────────────────────────┤
+│ - department: String                        │
+│ - count: int                                │
+│ - totalGross: double                        │
+│ - totalTax: double                          │
+│ - totalNet: double                          │
+└─────────────────────────────────────────────┘
 
-┌──────────────────────────────────────────────┐        ┌──────────────────────────────────────────────┐
-│            <<final>> <<utility>>             │        │               <<entry point>>                │
-│               PayslipExporter                │        │                     Main                     │
-├──────────────────────────────────────────────┤        ├──────────────────────────────────────────────┤
-│ - PayslipExporter()                          │        │ + {static} main(args: String[]): void        │
-│ + {static} exportToTxt(e, path): void        │        └──────────────────────────────────────────────┘
-│ + {static} exportToHtml(e, path): void       │
-│ + {static} exportToCsv(list, path): void     │
-└──────────────────────────────────────────────┘
-
-====================================================================================================
+========================================================================================================================
 III. BẢNG PHÂN TÍCH CHI TIẾT CÁC LỚP TRONG CỤM TIỆN ÍCH
-----------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
 
 1. EmployeeComparator (Mẫu thiết kế Strategy Pattern):
-   - Thay vì ép đối tượng Employee phải cài đặt 'Comparable' chỉ với 1 cách so sánh cứng nhắc duy nhất, 
-     nhóm thiết kế áp dụng Interface 'Comparator<Employee>'.
-   - Lợi ích: Cho phép người dùng chuyển đổi linh hoạt giữa 6 chiến lược sắp xếp khác nhau trên giao diện 
-     (theo Mã NV, theo Tên, theo Lương, theo Thâm niên, theo Phòng ban, theo Loại nhân sự), đồng thời 
-     hỗ trợ đảo chiều tăng dần / giảm dần (Ascending / Descending) bằng hàm 'comp.reversed()'.
+   - Thay vì ép đối tượng Employee cài đặt 'Comparable' với 1 cách so sánh cứng nhắc, áp dụng Interface 
+     'Comparator<Employee>' cho phép chuyển đổi 6 chiến lược sắp xếp trên giao diện: theo Mã NV, Tên tiếng Việt,       
+     Lương, Thâm niên, Phòng ban, Loại nhân viên. Hỗ trợ đảo chiều tăng/giảm bằng 'comp.reversed()'.
 
 2. ChartHelper & DeptSummary:
    - Đóng gói toàn bộ logic đồ họa của thư viện JFreeChart.
-   - Hàm calculateDeptSummaries() phân tích danh sách nhân sự, tính toán chính xác tổng lương gộp, tổng thuế 
-     và tổng thực lĩnh của từng phòng ban, đóng gói thành đối tượng DTO bất biến 'DeptSummary'.
+   - Hàm calculateDeptSummaries() phân tích danh sách nhân sự, tính tổng lương gộp, tổng thuế và thực lĩnh của từng 
+     phòng ban, đóng gói thành đối tượng DTO bất biến 'DeptSummary'.
 
 3. CurrencyFormatUtil:
-   - Lớp tiện ích tĩnh ('public final class' với private constructor) chuẩn hóa việc hiển thị tiền tệ VNĐ 
-     cho toàn bộ hệ thống, tránh lỗi sai lệch dấu phân cách hàng nghìn giữa các hệ điều hành (Windows/macOS/Linux).
+   - Tiện ích tĩnh chuẩn hóa việc hiển thị tiền tệ VNĐ, tránh sai lệch phân cách hàng nghìn giữa các hệ điều hành.      
 
 4. PayslipExporter:
-   - Cung cấp tính năng xuất phiếu lương cá nhân ra file HTML đẹp mắt với đầy đủ thông tin: Mã nhân viên, 
-     Họ tên, Phòng ban, Loại nhân viên, Lương cơ bản, Hệ số, Thưởng, Lương tổng, Bậc thuế TNCN, Thuế khấu trừ 
-     và Thực lĩnh cuối cùng.
-
-====================================================================================================
-IV. MÃ NGUỒN PLANTUML CHUYÊN BIỆT CHO CỤM UTILITIES
-(Copy-paste vào https://www.planttext.com để render ảnh)
-----------------------------------------------------------------------------------------------------
-
-@startuml
-!theme plain
-skinparam classAttributeIconSize 0
-skinparam linetype ortho
-skinparam shadowing false
-skinparam defaultFontName "Segoe UI"
-skinparam defaultFontSize 12
-
-title CỤM TIỆN ÍCH, COMPARATOR, BIỂU ĐỒ & EXPORTER (OOP NHÓM 08)
-
-interface "Comparator<Employee>" as Comparator <<interface>> {
-    + compare(o1: Employee, o2: Employee): int
-}
-
-class EmployeeComparator {
-    - {static} {final} VN_COLLATOR: Collator
-    - comparatorChain: Comparator<Employee>
-    + EmployeeComparator()
-    + EmployeeComparator(criteriaList: Criteria...)
-    + {override} compare(e1: Employee, e2: Employee): int
-    + {static} byId(): Comparator<Employee>
-    + {static} byName(): Comparator<Employee>
-    + {static} bySalary(): Comparator<Employee>
-    + {static} bySeniority(): Comparator<Employee>
-    + {static} byDepartment(): Comparator<Employee>
-    + {static} byEmployeeType(): Comparator<Employee>
-}
-
-enum Criteria <<enum>> {
-    DEPARTMENT
-    EMPLOYEE_TYPE
-    SALARY_DESC
-    SALARY_ASC
-    NAME
-    ID
-    SENIORITY_DESC
-}
-
-class ChartHelper <<final>> {
-    - ChartHelper()
-    + {static} calculateDeptSummaries(employees: List<Employee>): Map<String, DeptSummary>
-    + {static} createDepartmentPayrollBarChart(employees: List<Employee>): JFreeChart
-    + {static} createDepartmentSharePieChart(employees: List<Employee>): JFreeChart
-}
-
-class "ChartHelper.DeptSummary" as DeptSummary <<final>> {
-    - department: String
-    - count: int
-    - gross: double
-    - tax: double
-    - net: double
-    + DeptSummary(dept: String, count: int, gross: double, tax: double, net: double)
-    + getDepartment(): String
-    + getCount(): int
-    + getGross(): double
-    + getTax(): double
-    + getNet(): double
-}
-
-class ChartWindow {
-    + ChartWindow(employees: List<Employee>)
-}
-
-class CurrencyFormatUtil <<final>> {
-    - {static} {final} PATTERN: String = "#,##0"
-    - CurrencyFormatUtil()
-    + {static} format(amount: double): String
-    + {static} formatWithUnit(amount: double): String
-    + {static} parse(text: String): double
-    + {static} formatDate(date: LocalDate): String
-    + {static} parseDate(text: String): LocalDate
-}
-
-class PayslipExporter <<final>> {
-    - PayslipExporter()
-    + {static} exportToTxt(e: Employee, filePath: String): void
-    + {static} exportToHtml(e: Employee, filePath: String): void
-    + {static} exportToCsv(list: List<Employee>, filePath: String): void
-}
-
-class Main <<entry point>> {
-    + {static} main(args: String[]): void
-}
-
-' Mối quan hệ
-Comparator <|.. EmployeeComparator : <<implements>>
-EmployeeComparator +-- Criteria : <<inner enum>>
-ChartHelper +-- DeptSummary : <<inner class>>
-ChartWindow ..> ChartHelper : <<uses>>
-ChartHelper ..> DeptSummary : <<creates>>
-
-@enduml
-
-====================================================================================================
-HẾT TỆP 05. CỤM TIỆN ÍCH, SẮP XẾP, BIỂU ĐỒ & XUẤT BÁO CÁO
-====================================================================================================
-
+   - Cung cấp tính năng xuất phiếu lương cá nhân chi tiết ra file HTML đẹp mắt với đầy đủ thông tin: Lương gộp, Hệ số, 
+     Thưởng, Bậc thuế TNCN, Thuế khấu trừ và Thực lĩnh cuối cùng.
