@@ -22,7 +22,6 @@
 5. [Quy tắc nghiệp vụ tính Lương & Bảng tính Thuế TNCN](#5-quy-tắc-nghiệp-vụ-tính-lương--bảng-tính-thuế-tncn)
 6. [Lưu ý kỹ thuật](#6-lưu-ý-kỹ-thuật)
 7. [Bảng phân công nhiệm vụ](#7-bảng-phân-công-nhiệm-vụ)
-8. [Bảng kiểm thử mẫu (Test Cases)](#8-bảng-kiểm-thử-mẫu-test-cases)
 
 ---
 
@@ -240,22 +239,3 @@ OOP_Nhom08_HRPayrollSystem/
 | **8** | N24DCAT061 | Nguyễn Ngọc Quân | Hộp thoại tương tác & Form nhập liệu đa hình | `EmployeeFormDialog.java` |
 | **9** | N24DCAT039 | Nguyễn Nam Khánh | Cửa sổ phân tích & Biểu đồ thống kê JFreeChart | `ChartWindow.java`,<br> `ChartHelper.java` |
 | **10**| N24DCAT036 | Trần Minh Huy | Tính năng BONUS & Sắp xếp đa tiêu chí | `PayslipExporter.java`,<br> `EmployeeComparator.java` |
-
----
-
-## 8. Bảng kiểm thử mẫu (Test Cases)
-
-Đáp ứng đầy đủ yêu cầu kiểm thử dữ liệu biên và dữ liệu lỗi theo quy định Báo cáo kỹ thuật:
-
-| Mã Test | Mô tả ca kiểm thử | Dữ liệu đầu vào (Input) | Kết quả kỳ vọng (Expected Output) | Kết quả thực tế | Đánh giá |
-| :---: | :--- | :--- | :--- | :---: | :---: |
-| **TC01** | Thêm mới FullTime hợp lệ | Tên: "Lê An", Lương: 15tr, HS: 1.2, PC: 2tr | Thêm thành công, hiển thị ở bảng và cập nhật status bar | Đạt | Pass |
-| **TC02** | Bỏ trống họ tên nhân viên | Họ tên: "" (chuỗi rỗng), Lương: 10tr | Báo lỗi: "Họ và tên không được để trống!" | Đạt | Pass |
-| **TC03** | Nhập lương cơ bản âm | Lương cơ bản: -2.000.000 VNĐ | Ném `InvalidEmployeeDataException`: Lương phải > 0 | Đạt | Pass |
-| **TC04** | Tính lương Manager | Cơ bản 20tr, HS 1.0, Quản lý 4 người | Lương = 20tr + (4 * 500k) = 22tr VNĐ | Đạt | Pass |
-| **TC05** | Miễn thuế cho Intern | Intern nhận trợ cấp 4tr VNĐ | Cột Thuế TNCN = 0 VNĐ, Thực lĩnh = 4tr VNĐ | Đạt | Pass |
-| **TC06** | Tính thuế lũy tiến Bậc 2 | Thu nhập chịu thuế: 18.000.000 VNĐ | Thuế = (18tr - 10tr) * 5% = 400.000 VNĐ | Đạt | Pass |
-| **TC07** | Tính thuế lũy tiến Bậc 3 | Thu nhập chịu thuế: 30.000.000 VNĐ | Thuế = 500k + (30tr - 20tr) * 10% = 1.500.000 VNĐ | Đạt | Pass |
-| **TC08** | Lọc theo phòng ban | Chọn JComboBox "IT" | JTable chỉ hiển thị các nhân viên thuộc phòng IT | Đạt | Pass |
-| **TC09** | Xóa nhân viên đã chọn | Chọn 1 dòng và bấm nút Xóa | Hộp thoại xác nhận, xóa thành công, quỹ lương giảm | Đạt | Pass |
-| **TC10** | Xuất phiếu lương BONUS | Chọn nhân viên bất kỳ và bấm Xuất | Sinh file `payslip_NVxxx.html` định dạng chuẩn | Đạt | Pass |
