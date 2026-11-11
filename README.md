@@ -160,14 +160,21 @@ OOP_Nhom08_HRPayrollSystem/
 ## 5. Quy tắc nghiệp vụ tính Lương & Bảng tính Thuế TNCN
 
 ### 5.1 Công thức tính tiền lương theo loại hợp đồng
-1. Nhân viên toàn thời gian (`FullTimeEmployee`):<br>
-   &emsp; $$\text{Lương} = (\text{Lương cơ bản} \times \text{Hệ số thưởng}) + \text{Phụ cấp}$$
-2. Trưởng phòng / Quản lý (`Manager` - kế thừa `FullTimeEmployee`):<br>
-   &emsp; $$\text{Lương Manager} = \text{super.calculateSalary()} + (\text{Số người quản lý} \times 500.000 \text{VNĐ})$$
-3. Nhân viên bán thời gian (`PartTimeEmployee`):<br>
-   &emsp; $$\text{Lương} = \text{Lương theo giờ} \times \text{Số giờ làm việc thực tế}$$
-4. Thực tập sinh (`Intern`):<br>
-   &emsp; $$\text{Lương} = \text{Mức trợ cấp cố định}$$
+1. Nhân viên toàn thời gian (`FullTimeEmployee`):
+
+$$\text{Lương} = (\text{Lương cơ bản} \times \text{Hệ số thưởng}) + \text{Phụ cấp}$$
+
+2. Trưởng phòng / Quản lý (`Manager` - kế thừa `FullTimeEmployee`):
+
+$$\text{Lương Manager} = \text{super.calculateSalary()} + (\text{Số người quản lý} \times 500.000 \text{VNĐ})$$
+
+3. Nhân viên bán thời gian (`PartTimeEmployee`):
+
+$$\text{Lương} = \text{Lương theo giờ} \times \text{Số giờ làm việc thực tế}$$
+ 
+4. Thực tập sinh (`Intern`):
+
+$$\text{Lương} = \text{Mức trợ cấp cố định}$$
 
 ---
 
@@ -183,8 +190,9 @@ OOP_Nhom08_HRPayrollSystem/
 | **Bậc 3** | Trên $20.000.000$ đến $40.000.000$ VNĐ | **10%** | Tối đa $2.000.000$ VNĐ |
 | **Bậc 4** | Trên $40.000.000$ VNĐ | **20%** | $20\%$ cho phần vượt trên $40.000.000$ VNĐ |
 
-* Công thức Thực lĩnh (Net Salary):<br>
-  &emsp; $$\text{Thực lĩnh} = \text{Tổng lương} - \text{Thuế TNCN}$$
+* Công thức Thực lĩnh (Net Salary):
+
+$$\text{Thực lĩnh} = \text{Tổng lương} - \text{Thuế TNCN}$$
 
 ---
 
